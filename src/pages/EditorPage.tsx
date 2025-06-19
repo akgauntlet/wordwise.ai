@@ -10,10 +10,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Settings, AlertCircle, Check, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Settings, AlertCircle } from 'lucide-react';
 import { DocumentEditor } from '@/components/editor';
 import { useAuth } from '@/hooks/auth/useAuthContext';
-import { useDocument, useDocuments } from '@/hooks/document';
+import { useDocument } from '@/hooks/document';
 import type { TiptapContent } from '@/types/document';
 
 
@@ -26,33 +26,35 @@ export function EditorPage() {
   const navigate = useNavigate();
   const { documentId } = useParams<{ documentId: string }>();
   const { user } = useAuth();
-  const { createNewDocument } = useDocuments();
+
   const { document, loading, error, saveStatus, updateContent, saveDocument } = useDocument(documentId || null);
   
   const [showDetailedStats, setShowDetailedStats] = useState(false);
   const [currentTitle, setCurrentTitle] = useState('');
 
   /**
-   * Handle new documents or update title when document loads
+   * Update title when document loads
    */
   useEffect(() => {
     if (document) {
       setCurrentTitle(document.title);
-    } else if (!documentId) {
-      // Create a new document when no ID is provided
-      handleCreateNewDocument();
     }
-  }, [document, documentId]);
+  }, [document]);
 
   /**
-   * Create a new document and redirect to its editor
+   * Handle window beforeunload to warn about unsaved changes
    */
-  const handleCreateNewDocument = async () => {
-    const newDocumentId = await createNewDocument();
-    if (newDocumentId) {
-      navigate(`/editor/${newDocumentId}`, { replace: true });
-    }
-  };
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (saveStatus === 'pending') {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [saveStatus]);
 
   /**
    * Handle content changes in the editor
@@ -62,9 +64,20 @@ export function EditorPage() {
   };
 
   /**
+   * Handle title changes in the editor
+   */
+  const handleTitleChange = async (newTitle: string) => {
+    setCurrentTitle(newTitle);
+    // Save the title change immediately
+    if (document) {
+      await saveDocument(document.content, newTitle);
+    }
+  };
+
+  /**
    * Handle manual save from the editor
    */
-  const handleManualSave = async (content: TiptapContent, ..._args: unknown[]) => {
+  const handleManualSave = async (content: TiptapContent) => {
     await saveDocument(content, currentTitle);
   };
 
@@ -91,6 +104,19 @@ export function EditorPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             You need to be logged in to access the editor.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!documentId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Alert className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            No document specified. Please select a document from your dashboard or create a new one.
           </AlertDescription>
         </Alert>
       </div>
@@ -131,34 +157,6 @@ export function EditorPage() {
             </div>
             
             <div className="flex items-center gap-2">
-              {/* Save Status Indicator */}
-              <div className="flex items-center gap-2 text-sm">
-                {saveStatus === 'saved' && (
-                  <>
-                    <Check className="h-4 w-4 text-green-600" />
-                    <span className="text-green-600">Saved</span>
-                  </>
-                )}
-                {saveStatus === 'saving' && (
-                  <>
-                    <Clock className="h-4 w-4 text-blue-600 animate-spin" />
-                    <span className="text-blue-600">Saving...</span>
-                  </>
-                )}
-                {saveStatus === 'pending' && (
-                  <>
-                    <Clock className="h-4 w-4 text-yellow-600" />
-                    <span className="text-yellow-600">Unsaved changes</span>
-                  </>
-                )}
-                {saveStatus === 'error' && (
-                  <>
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
-                    <span className="text-red-600">Save failed</span>
-                  </>
-                )}
-              </div>
-
               <Button
                 variant="outline"
                 size="sm"
@@ -191,8 +189,9 @@ export function EditorPage() {
                 title={currentTitle}
                 targetWords={500}
                 onContentChange={handleContentChange}
+                onTitleChange={handleTitleChange}
                 onAutoSave={handleManualSave} // Manual save handled by useDocument hook
-                autoSaveInterval={30000} // 30 seconds
+                saveStatus={saveStatus}
                 className="w-full"
               />
             ) : (

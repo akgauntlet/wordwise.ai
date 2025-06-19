@@ -6,7 +6,7 @@
  * Usage: State management and operations for user documents
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/auth/useAuthContext";
 import {
   createDocument,
@@ -216,8 +216,9 @@ export function useDocument(documentId: string | null) {
   const [document, setDocument] = useState<Document | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
+  const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'pending' | 'error'>('saved');
+  const isInitialLoad = useRef(true);
 
   /**
    * Load document
@@ -243,8 +244,8 @@ export function useDocument(documentId: string | null) {
    */
   const scheduleAutoSave = useCallback((content: TiptapContent, title?: string) => {
     // Clear the previous timer (debouncing)
-    if (autoSaveTimer) {
-      clearTimeout(autoSaveTimer);
+    if (autoSaveTimer.current) {
+      clearTimeout(autoSaveTimer.current);
     }
 
     // Set status to pending (user has unsaved changes)
@@ -271,9 +272,9 @@ export function useDocument(documentId: string | null) {
       }
     }, 10 * 1000); // 10 seconds after user stops typing
 
-    setAutoSaveTimer(timer);
+    autoSaveTimer.current = timer;
     console.log('⏱️ Auto-save scheduled - will save in 10 seconds if no more changes');
-  }, [documentId, autoSaveTimer]);
+  }, [documentId]);
 
   /**
    * Save document immediately
@@ -317,15 +318,17 @@ export function useDocument(documentId: string | null) {
    * Load document on mount or ID change
    */
   useEffect(() => {
+    isInitialLoad.current = true; // Reset flag when document ID changes
     loadDocument();
   }, [loadDocument]);
 
   /**
-   * Set save status to 'saved' when document loads
+   * Set save status to 'saved' when document initially loads (not on content updates)
    */
   useEffect(() => {
-    if (document) {
+    if (document && isInitialLoad.current) {
       setSaveStatus('saved');
+      isInitialLoad.current = false;
     }
   }, [document]);
 
@@ -334,11 +337,11 @@ export function useDocument(documentId: string | null) {
    */
   useEffect(() => {
     return () => {
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer);
+      if (autoSaveTimer.current) {
+        clearTimeout(autoSaveTimer.current);
       }
     };
-  }, [autoSaveTimer]);
+  }, []);
 
   return {
     document,

@@ -6,7 +6,7 @@
  * Usage: Complete rich text editor with toolbar and statistics
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { EditorContent } from '@tiptap/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Save, AlertCircle } from 'lucide-react';
 import { EditorToolbar } from './EditorToolbar';
 import { EditorStats } from './EditorStats';
+import { EditableTitle } from './EditableTitle';
 import { useEditor } from '@/hooks/editor';
 import type { TiptapContent } from '@/types/document';
 
@@ -33,18 +34,15 @@ interface DocumentEditorProps {
   readOnly?: boolean;
   /** Callback when content changes */
   onContentChange?: (content: TiptapContent, plainText: string) => void;
+  /** Callback when title changes */
+  onTitleChange?: (newTitle: string) => void;
   /** Callback for auto-save */
   onAutoSave?: (content: TiptapContent, plainText: string) => Promise<void>;
-  /** Auto-save interval in milliseconds */
-  autoSaveInterval?: number;
+  /** External save status from useDocument hook */
+  saveStatus?: 'saved' | 'saving' | 'pending' | 'error';
   /** Additional CSS classes */
   className?: string;
 }
-
-/**
- * Auto-save status types
- */
-type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 /**
  * Main document editor component
@@ -57,7 +55,7 @@ type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
  * @param readOnly Whether editor is read-only
  * @param onContentChange Callback when content changes
  * @param onAutoSave Callback for auto-save functionality
- * @param autoSaveInterval Auto-save interval in milliseconds
+ * @param saveStatus External save status from useDocument hook
  * @param className Additional CSS classes
  */
 export function DocumentEditor({
@@ -67,20 +65,15 @@ export function DocumentEditor({
   showDetailedStats = false,
   readOnly = false,
   onContentChange,
+  onTitleChange,
   onAutoSave,
-  autoSaveInterval = 30000, // 30 seconds
+  saveStatus = 'saved',
   className = ''
 }: DocumentEditorProps) {
-  const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle');
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
   /**
    * Handle content updates from the editor
    */
   const handleContentUpdate = useCallback((content: TiptapContent, plainText: string) => {
-    setHasUnsavedChanges(true);
-    setAutoSaveStatus('idle');
     onContentChange?.(content, plainText);
   }, [onContentChange]);
 
@@ -97,79 +90,25 @@ export function DocumentEditor({
   });
 
   /**
-   * Perform auto-save
+   * Manual save function
    */
-  const performAutoSave = useCallback(async () => {
-    if (!editor || !onAutoSave || !hasUnsavedChanges || autoSaveStatus === 'saving') {
-      return;
-    }
-
-    setAutoSaveStatus('saving');
-
+  const handleManualSave = useCallback(async () => {
+    if (!editor || !onAutoSave) return;
+    
     try {
       const content = editor.getJSON() as TiptapContent;
       const plainText = editor.getText();
       await onAutoSave(content, plainText);
-      
-      setAutoSaveStatus('saved');
-      setLastSaved(new Date());
-      setHasUnsavedChanges(false);
-      
-      // Reset status after showing success briefly
-      setTimeout(() => {
-        setAutoSaveStatus('idle');
-      }, 2000);
     } catch (error) {
-      console.error('Auto-save failed:', error);
-      setAutoSaveStatus('error');
-      
-      // Show error briefly then reset
-      setTimeout(() => {
-        setAutoSaveStatus('idle');
-      }, 5000);
+      console.error('Manual save failed:', error);
     }
-  }, [editor, onAutoSave, hasUnsavedChanges, autoSaveStatus]);
-
-  /**
-   * Manual save function
-   */
-  const handleManualSave = useCallback(async () => {
-    await performAutoSave();
-  }, [performAutoSave]);
-
-  /**
-   * Set up auto-save interval
-   */
-  useEffect(() => {
-    if (!onAutoSave || !autoSaveInterval) return;
-
-    const interval = setInterval(() => {
-      performAutoSave();
-    }, autoSaveInterval);
-
-    return () => clearInterval(interval);
-  }, [performAutoSave, onAutoSave, autoSaveInterval]);
-
-  /**
-   * Handle window beforeunload to warn about unsaved changes
-   */
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
+  }, [editor, onAutoSave]);
 
   /**
    * Get auto-save status display
    */
   const getAutoSaveDisplay = () => {
-    switch (autoSaveStatus) {
+    switch (saveStatus) {
       case 'saving':
         return (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -181,7 +120,7 @@ export function DocumentEditor({
         return (
           <div className="flex items-center gap-2 text-sm text-green-600">
             <Save className="h-3 w-3" />
-            Saved {lastSaved?.toLocaleTimeString()}
+            Saved
           </div>
         );
       case 'error':
@@ -191,13 +130,15 @@ export function DocumentEditor({
             Save failed
           </div>
         );
-      default:
-        return hasUnsavedChanges ? (
+      case 'pending':
+        return (
           <div className="flex items-center gap-2 text-sm text-orange-600">
             <div className="w-2 h-2 bg-orange-500 rounded-full" />
             Unsaved changes
           </div>
-        ) : null;
+        );
+      default:
+        return null;
     }
   };
 
@@ -215,7 +156,11 @@ export function DocumentEditor({
       {/* Header with title and auto-save status */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{title}</h1>
+          <EditableTitle
+            title={title}
+            onTitleChange={onTitleChange || (() => {})}
+            readOnly={readOnly}
+          />
           <EditorStats 
             editor={editor} 
             targetWords={targetWords}
@@ -230,9 +175,9 @@ export function DocumentEditor({
               variant="outline"
               size="sm"
               onClick={handleManualSave}
-              disabled={autoSaveStatus === 'saving' || !hasUnsavedChanges}
+              disabled={saveStatus === 'saving'}
             >
-              {autoSaveStatus === 'saving' ? (
+              {saveStatus === 'saving' ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (
                 <Save className="h-4 w-4 mr-2" />
@@ -244,7 +189,7 @@ export function DocumentEditor({
       </div>
 
       {/* Error alert */}
-      {autoSaveStatus === 'error' && (
+      {saveStatus === 'error' && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>

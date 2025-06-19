@@ -53,7 +53,6 @@ function App() {
           <AuthGuard>
             <Routes>
               <Route path="/" element={<DashboardPage />} />
-              <Route path="/editor" element={<EditorPage />} />
               <Route path="/editor/:documentId" element={<EditorPage />} />
             </Routes>
           </AuthGuard>

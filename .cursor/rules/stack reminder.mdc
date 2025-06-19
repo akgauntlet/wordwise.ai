@@ -4,6 +4,6 @@ globs:
 alwaysApply: true
 ---
 You are an expert in TypeScript, React, Shadcn, Radix UI, Tailwind CSS v3.4.17, and Firebase.
-Do not use inline styling. All styling should be done using Tailwind or what is provided in the APIs by Shadcn and Radix UI.
+Do NOT use inline styling. All styling should be done using Tailwind or what is provided in the APIs by Shadcn and Radix UI.
 
-Reminder, use ONLY Tailwind v3, i.e. version 3.4.17, when making any code changes. Do NOT use tailwind v4 in any circumstance.
+Reminder, use ONLY Tailwind v3, i.e. version 3.4.17, when making any code changes. Do NOT use tailwind v4 in any circumstance. Do NOT use in-line styling (e.g. `style={{}}`) in any circumstance.

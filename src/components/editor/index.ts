@@ -5,4 +5,5 @@
 
 export { DocumentEditor } from './DocumentEditor';
 export { EditorToolbar } from './EditorToolbar';
-export { EditorStats } from './EditorStats'; 
+export { EditorStats } from './EditorStats';
+export { EditableTitle } from './EditableTitle'; 

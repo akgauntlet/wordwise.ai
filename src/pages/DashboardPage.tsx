@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/hooks/auth/useAuthContext";
 import { DocumentList } from "@/components/dashboard/DocumentList";
 import { useDocuments } from "@/hooks/document/useDocuments";
-import { User, LogOut, Edit3, FileText, Plus, Settings } from "lucide-react";
+import { User, LogOut, FileText, Plus, Settings } from "lucide-react";
 
 /**
  * Dashboard page component for authenticated users
@@ -41,12 +41,7 @@ export function DashboardPage() {
     }
   };
 
-  /**
-   * Navigate to the editor
-   */
-  const handleOpenEditor = () => {
-    navigate('/editor');
-  };
+
 
   /**
    * Create a new document
@@ -92,7 +87,7 @@ export function DashboardPage() {
           {/* Quick Actions */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleCreateDocument}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -123,23 +118,6 @@ export function DashboardPage() {
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
                     Access your saved documents and continue working on drafts.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleOpenEditor}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Edit3 className="h-5 w-5 text-purple-600" />
-                    Open Editor
-                  </CardTitle>
-                  <CardDescription>
-                    Jump straight to writing
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Access the full-featured editor with formatting tools and statistics.
                   </p>
                 </CardContent>
               </Card>
