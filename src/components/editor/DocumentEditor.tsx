@@ -6,7 +6,7 @@
  * Usage: Complete rich text editor with toolbar and statistics
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo, memo } from 'react';
 import { EditorContent } from '@tiptap/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,6 +45,65 @@ interface DocumentEditorProps {
 }
 
 /**
+ * Memoized auto-save status display component
+ */
+const AutoSaveStatus = memo(({ saveStatus }: { saveStatus: string }) => {
+  switch (saveStatus) {
+    case 'saving':
+      return (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Saving...
+        </div>
+      );
+    case 'saved':
+      return (
+        <div className="flex items-center gap-2 text-sm text-green-600">
+          <Save className="h-3 w-3" />
+          Saved
+        </div>
+      );
+    case 'error':
+      return (
+        <div className="flex items-center gap-2 text-sm text-red-600">
+          <AlertCircle className="h-3 w-3" />
+          Save failed
+        </div>
+      );
+    case 'pending':
+      return (
+        <div className="flex items-center gap-2 text-sm text-orange-600">
+          <div className="w-2 h-2 bg-orange-500 rounded-full" />
+          Unsaved changes
+        </div>
+      );
+    default:
+      return null;
+  }
+});
+
+AutoSaveStatus.displayName = 'AutoSaveStatus';
+
+/**
+ * Memoized empty state component
+ */
+const EmptyState = memo(({ readOnly }: { readOnly: boolean }) => (
+  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+    <div className="text-center text-muted-foreground">
+      <div className="text-lg mb-2">✍️</div>
+      <p className="text-sm">
+        {readOnly 
+          ? 'This document is empty.' 
+          : 'Start writing your document here...'
+        }
+      </p>
+    </div>
+  </div>
+));
+
+EmptyState.displayName = 'EmptyState';
+
+/**
  * Main document editor component
  * Combines Tiptap editor with toolbar, statistics, and auto-save functionality
  * 
@@ -58,7 +117,7 @@ interface DocumentEditorProps {
  * @param saveStatus External save status from useDocument hook
  * @param className Additional CSS classes
  */
-export function DocumentEditor({
+export const DocumentEditor = memo(function DocumentEditor({
   initialContent = '',
   title = 'Untitled Document',
   targetWords = 500,
@@ -71,7 +130,7 @@ export function DocumentEditor({
   className = ''
 }: DocumentEditorProps) {
   /**
-   * Handle content updates from the editor
+   * Handle content updates from the editor - memoized to prevent re-creation
    */
   const handleContentUpdate = useCallback((content: TiptapContent, plainText: string) => {
     onContentChange?.(content, plainText);
@@ -90,7 +149,7 @@ export function DocumentEditor({
   });
 
   /**
-   * Manual save function
+   * Manual save function - memoized to prevent re-creation
    */
   const handleManualSave = useCallback(async () => {
     if (!editor || !onAutoSave) return;
@@ -105,42 +164,22 @@ export function DocumentEditor({
   }, [editor, onAutoSave]);
 
   /**
-   * Get auto-save status display
+   * Memoized editor content container classes
    */
-  const getAutoSaveDisplay = () => {
-    switch (saveStatus) {
-      case 'saving':
-        return (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            Saving...
-          </div>
-        );
-      case 'saved':
-        return (
-          <div className="flex items-center gap-2 text-sm text-green-600">
-            <Save className="h-3 w-3" />
-            Saved
-          </div>
-        );
-      case 'error':
-        return (
-          <div className="flex items-center gap-2 text-sm text-red-600">
-            <AlertCircle className="h-3 w-3" />
-            Save failed
-          </div>
-        );
-      case 'pending':
-        return (
-          <div className="flex items-center gap-2 text-sm text-orange-600">
-            <div className="w-2 h-2 bg-orange-500 rounded-full" />
-            Unsaved changes
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
+  const editorContentClasses = useMemo(() => `
+    relative min-h-[500px] max-h-[calc(100vh-300px)] overflow-y-auto
+    ${readOnly ? 'bg-muted/20' : 'bg-background'}
+  `, [readOnly]);
+
+  /**
+   * Memoized save button props
+   */
+  const saveButtonProps = useMemo(() => ({
+    variant: "outline" as const,
+    size: "sm" as const,
+    onClick: handleManualSave,
+    disabled: saveStatus === 'saving'
+  }), [handleManualSave, saveStatus]);
 
   if (!editor) {
     return (
@@ -169,14 +208,9 @@ export function DocumentEditor({
         </div>
         
         <div className="flex items-center gap-4">
-          {getAutoSaveDisplay()}
+          <AutoSaveStatus saveStatus={saveStatus} />
           {onAutoSave && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleManualSave}
-              disabled={saveStatus === 'saving'}
-            >
+            <Button {...saveButtonProps}>
               {saveStatus === 'saving' ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (
@@ -204,31 +238,14 @@ export function DocumentEditor({
         {!readOnly && <EditorToolbar editor={editor} />}
         
         {/* Editor content */}
-        <div 
-          className={`
-            relative min-h-[500px] max-h-[calc(100vh-300px)] overflow-y-auto
-            ${readOnly ? 'bg-muted/20' : 'bg-background'}
-          `}
-        >
+        <div className={editorContentClasses}>
           <EditorContent 
             editor={editor}
             className="focus-within:outline-none"
           />
           
           {/* Empty state */}
-          {editor.isEmpty && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center text-muted-foreground">
-                <div className="text-lg mb-2">✍️</div>
-                <p className="text-sm">
-                  {readOnly 
-                    ? 'This document is empty.' 
-                    : 'Start writing your document here...'
-                  }
-                </p>
-              </div>
-            </div>
-          )}
+          {editor.isEmpty && <EmptyState readOnly={readOnly} />}
         </div>
       </Card>
 
@@ -243,4 +260,4 @@ export function DocumentEditor({
       )}
     </div>
   );
-} 
+}); 

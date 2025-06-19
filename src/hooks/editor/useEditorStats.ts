@@ -6,7 +6,7 @@
  * Usage: Provides real-time statistics for text content
  */
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
 
 /**
@@ -29,6 +29,14 @@ export interface EditorStats {
   avgWordsPerSentence: number;
   /** Average characters per word */
   avgCharactersPerWord: number;
+}
+
+/**
+ * Cache for expensive calculations
+ */
+interface StatsCache {
+  text: string;
+  stats: EditorStats;
 }
 
 /**
@@ -74,7 +82,51 @@ function calculateReadingTime(wordCount: number): number {
 }
 
 /**
- * Custom hook for editor statistics
+ * Calculate all statistics for text
+ * Optimized to avoid repeated calculations
+ */
+const calculateStats = (text: string): EditorStats => {
+  if (!text) {
+    return {
+      characters: 0,
+      charactersNoSpaces: 0,
+      words: 0,
+      sentences: 0,
+      paragraphs: 0,
+      readingTime: 0,
+      avgWordsPerSentence: 0,
+      avgCharactersPerWord: 0,
+    };
+  }
+
+  // Basic counts (fast operations)
+  const characters = text.length;
+  const charactersNoSpaces = text.replace(/\s/g, '').length;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  
+  // Expensive operations (cached)
+  const sentences = countSentences(text);
+  const paragraphs = countParagraphs(text);
+  
+  // Calculated metrics
+  const readingTime = calculateReadingTime(words);
+  const avgWordsPerSentence = sentences > 0 ? Math.round((words / sentences) * 10) / 10 : 0;
+  const avgCharactersPerWord = words > 0 ? Math.round((charactersNoSpaces / words) * 10) / 10 : 0;
+
+  return {
+    characters,
+    charactersNoSpaces,
+    words,
+    sentences,
+    paragraphs,
+    readingTime,
+    avgWordsPerSentence,
+    avgCharactersPerWord,
+  };
+};
+
+/**
+ * Custom hook for editor statistics with performance optimizations
  * 
  * @param editor Tiptap editor instance
  * @returns Real-time statistics object
@@ -86,49 +138,26 @@ function calculateReadingTime(wordCount: number): number {
  * ```
  */
 export function useEditorStats(editor: Editor | null): EditorStats {
+  const cacheRef = useRef<StatsCache | null>(null);
+  
   // Extract the text content to avoid complex dependency
   const text = editor?.getText() || '';
   
+  // Memoized calculation with cache
   return useMemo(() => {
-    if (!editor || !text) {
-      return {
-        characters: 0,
-        charactersNoSpaces: 0,
-        words: 0,
-        sentences: 0,
-        paragraphs: 0,
-        readingTime: 0,
-        avgWordsPerSentence: 0,
-        avgCharactersPerWord: 0,
-      };
+    // Check cache first
+    if (cacheRef.current && cacheRef.current.text === text) {
+      return cacheRef.current.stats;
     }
-
-    // Get text content from editor
-    const textNoSpaces = text.replace(/\s/g, '');
     
-    // Basic counts
-    const characters = text.length;
-    const charactersNoSpaces = textNoSpaces.length;
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    const sentences = countSentences(text);
-    const paragraphs = countParagraphs(text);
+    // Calculate new stats
+    const stats = calculateStats(text);
     
-    // Calculated metrics
-    const readingTime = calculateReadingTime(words);
-    const avgWordsPerSentence = sentences > 0 ? Math.round((words / sentences) * 10) / 10 : 0;
-    const avgCharactersPerWord = words > 0 ? Math.round((charactersNoSpaces / words) * 10) / 10 : 0;
-
-    return {
-      characters,
-      charactersNoSpaces,
-      words,
-      sentences,
-      paragraphs,
-      readingTime,
-      avgWordsPerSentence,
-      avgCharactersPerWord,
-    };
-  }, [editor, text]);
+    // Update cache
+    cacheRef.current = { text, stats };
+    
+    return stats;
+  }, [text]);
 }
 
 /**

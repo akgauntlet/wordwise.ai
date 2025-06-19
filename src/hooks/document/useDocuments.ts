@@ -251,7 +251,7 @@ export function useDocument(documentId: string | null) {
     // Set status to pending (user has unsaved changes)
     setSaveStatus('pending');
 
-    // Set a new timer - only saves if user stops typing for 10 seconds
+    // Set a new timer - only saves if user stops typing for 3 seconds
     const timer = setTimeout(async () => {
       if (!documentId) return;
       
@@ -270,10 +270,10 @@ export function useDocument(documentId: string | null) {
         setSaveStatus('error');
         console.error("❌ Auto-save failed:", err);
       }
-    }, 10 * 1000); // 10 seconds after user stops typing
+    }, 3 * 1000); // 3 seconds after user stops typing (reduced from 10 seconds)
 
     autoSaveTimer.current = timer;
-    console.log('⏱️ Auto-save scheduled - will save in 10 seconds if no more changes');
+    console.log('⏱️ Auto-save scheduled - will save in 3 seconds if no more changes');
   }, [documentId]);
 
   /**
