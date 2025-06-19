@@ -6,14 +6,14 @@
  * Usage: Main dashboard page for authenticated users
  */
 
-import { useState } from "react";
+
 import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/auth/useAuthContext";
 import { DocumentList } from "@/components/dashboard/DocumentList";
 import { useDocuments } from "@/hooks/document/useDocuments";
-import { User, LogOut, FileText, Plus, Settings } from "lucide-react";
+import { PageErrorBoundary } from "@/components/layout";
+import { FileText, Plus, Settings, User } from "lucide-react";
 
 /**
  * Dashboard page component for authenticated users
@@ -21,25 +21,10 @@ import { User, LogOut, FileText, Plus, Settings } from "lucide-react";
  * This component shows the main dashboard with document management,
  * navigation to the editor, and user profile information
  */
-export function DashboardPage() {
-  const { user, profile, signOut } = useAuth();
+function DashboardPageContent() {
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { createNewDocument } = useDocuments();
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
-  /**
-   * Handle user sign-out
-   */
-  const handleSignOut = async (): Promise<void> => {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Sign out error:", error);
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
 
 
 
@@ -56,31 +41,6 @@ export function DashboardPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <header className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">WordWise.ai</h1>
-            <p className="text-muted-foreground text-lg">
-              AI-Powered Writing Assistant for ESL College Students
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm">
-              <User className="h-4 w-4" />
-              <span>{profile?.displayName || user?.email}</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSignOut}
-              disabled={isSigningOut}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              {isSigningOut ? "Signing Out..." : "Sign Out"}
-            </Button>
-          </div>
-        </header>
         
         {/* Main Content */}
         <main>
@@ -244,5 +204,16 @@ export function DashboardPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+/**
+ * Dashboard page with error boundary
+ */
+export function DashboardPage() {
+  return (
+    <PageErrorBoundary pageName="Dashboard">
+      <DashboardPageContent />
+    </PageErrorBoundary>
   );
 } 

@@ -11,6 +11,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { auth, db } from "@/lib/firebase/config";
 import { AuthProvider } from "@/hooks/auth/useAuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { AppLayout } from "@/components/layout";
 import { DashboardPage, EditorPage } from "@/pages";
 
 /**
@@ -49,14 +50,14 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="app">
-          <AuthGuard>
+        <AuthGuard>
+          <AppLayout>
             <Routes>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/editor/:documentId" element={<EditorPage />} />
             </Routes>
-          </AuthGuard>
-        </div>
+          </AppLayout>
+        </AuthGuard>
       </Router>
     </AuthProvider>
   );
