@@ -87,7 +87,18 @@ export function DocumentCard({
    * Format date for display
    */
   const formatDate = (timestamp: { toDate?: () => Date } | Date | string) => {
-    const date = (timestamp as any)?.toDate?.() || new Date(timestamp as any);
+    let date: Date;
+    
+    if (typeof timestamp === 'object' && timestamp !== null && 'toDate' in timestamp) {
+      date = timestamp.toDate?.() || new Date();
+    } else if (timestamp instanceof Date) {
+      date = timestamp;
+    } else if (typeof timestamp === 'string') {
+      date = new Date(timestamp);
+    } else {
+      date = new Date();
+    }
+    
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -207,7 +218,7 @@ export function DocumentCard({
             </div>
             <div className="flex items-center gap-1">
               <FileText className="h-3 w-3" />
-              <span>{document.characterCount} chars</span>
+              <span>{document.characterCount} characters</span>
             </div>
           </div>
           

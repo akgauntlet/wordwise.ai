@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/auth/useAuthContext";
 import { DocumentList } from "@/components/dashboard/DocumentList";
 import { useDocuments } from "@/hooks/document/useDocuments";
 import { PageErrorBoundary } from "@/components/layout";
-import { FileText, Plus, Settings, User } from "lucide-react";
+import { FileText, Plus, User } from "lucide-react";
 
 /**
  * Dashboard page component for authenticated users
@@ -89,80 +89,6 @@ function DashboardPageContent() {
             <DocumentList />
           </div>
 
-          {/* Feature Progress */}
-          <div className="mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Development Progress
-                </CardTitle>
-                <CardDescription>
-                  Phase 1 implementation status
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-semibold mb-3">Completed Features</h4>
-                    <ul className="space-y-2">
-                      <li className="flex items-center gap-2">
-                        <span className="text-green-500">✓</span>
-                        React + TypeScript + Vite
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-green-500">✓</span>
-                        Tailwind CSS v3.4.17
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-green-500">✓</span>
-                        Shadcn/ui Components
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-green-500">✓</span>
-                        Firebase Backend Integration
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-green-500">✓</span>
-                        User Authentication
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-green-500">✓</span>
-                        Rich Text Editor
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-semibold mb-3">Next Steps</h4>
-                    <ul className="space-y-2">
-                      <li className="flex items-center gap-2">
-                        <span className="text-yellow-500">◐</span>
-                        Document Management (Phase 1 Step 5)
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-gray-400">○</span>
-                        AI Writing Assistance (Phase 2)
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-gray-400">○</span>
-                        Real-time Suggestions (Phase 2)
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-gray-400">○</span>
-                        Grammar Checking (Phase 2)
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="text-gray-400">○</span>
-                        Style Analysis (Phase 2)
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* User Profile */}
           <div className="mb-8">
             <Card>
@@ -192,10 +118,6 @@ function DashboardPageContent() {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">Proficiency Level</p>
                     <p className="text-sm">{profile?.proficiencyLevel || "intermediate"}</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <p className="text-sm font-medium text-muted-foreground mb-1">User ID</p>
-                    <p className="text-xs font-mono bg-muted px-2 py-1 rounded">{user?.uid}</p>
                   </div>
                 </div>
               </CardContent>
