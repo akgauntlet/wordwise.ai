@@ -1,0 +1,1 @@
+the ui does not immediately respond to closing the google signin popup (might be CORS-related?)
