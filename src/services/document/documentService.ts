@@ -149,14 +149,11 @@ export async function updateDocument(
 
     // Update plain text and counts if content changed
     if (updates.content) {
-      console.log('Updating document with content:', JSON.stringify(updates.content, null, 2));
       const rawPlainText = extractPlainText(updates.content);
       const plainText = rawPlainText.replace(/\s+/g, ' ').trim(); // Normalize whitespace
-      console.log('Extracted plain text:', plainText);
       updateData.plainText = plainText;
       updateData.wordCount = countWords(plainText);
       updateData.characterCount = plainText.length;
-      console.log('Update data:', { plainText, wordCount: updateData.wordCount, characterCount: updateData.characterCount });
     }
 
     await updateDoc(docRef, updateData);
@@ -326,8 +323,6 @@ export function subscribeToUserDocuments(
     console.error("Error in user documents subscription:", error);
   });
 }
-
-
 
 /**
  * Auto-save with retry logic

@@ -126,8 +126,7 @@ async function retryFirestoreOperation<T>(
       
       // Wait before retrying, with exponential backoff
       const delay = baseDelay * Math.pow(2, attempt);
-      console.log(`🔄 Retrying Firestore operation in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+              await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
   
@@ -143,8 +142,7 @@ async function waitForAuthToken(user: FirebaseUser): Promise<void> {
   try {
     // Get the ID token to ensure auth is fully ready
     await user.getIdToken(true);
-  } catch (error) {
-    console.log("⏳ Auth token not ready, waiting...", error);
+  } catch {
     // If token isn't ready, wait a bit and try again
     await new Promise(resolve => setTimeout(resolve, 500));
     await user.getIdToken(true);
@@ -217,11 +215,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
       if (user) {
         try {
-          console.log("🔥 User authenticated:", user.email);
-          
           // Wait for auth token to be properly available
           await waitForAuthToken(user);
-          console.log("✅ Auth token ready");
           
           // Get user profile from Firestore with retry mechanism
           let profile = await retryFirestoreOperation(
@@ -229,8 +224,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           );
           
           if (!profile) {
-            console.log("⚠️ No profile found, creating default profile...");
-            
             // Create a default profile for existing users
             profile = await retryFirestoreOperation(
               () => createUserProfile(user.uid, {
@@ -241,8 +234,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 proficiencyLevel: "intermediate",
               })
             );
-            
-            console.log("✅ Default profile created");
           }
           
           dispatch({ 
@@ -251,7 +242,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
           
         } catch (error) {
-          console.error("❌ Error in auth state change:", error);
+          console.error("Error in auth state change:", error);
           
           // Instead of failing completely, let's try to continue with minimal profile
           const minimalProfile = {
@@ -271,7 +262,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         }
       } else {
-        console.log("🔓 User signed out");
         dispatch({ type: "AUTH_LOGOUT" });
       }
     });

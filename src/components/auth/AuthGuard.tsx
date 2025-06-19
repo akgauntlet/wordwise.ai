@@ -56,7 +56,6 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
             onSwitchToSignIn={() => setShowSignUp(false)}
             onSignUpSuccess={() => {
               // Authentication state will be handled by the context
-              console.log("Sign-up successful");
             }}
           />
         ) : (
@@ -64,7 +63,6 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
             onSwitchToSignUp={() => setShowSignUp(true)}
             onSignInSuccess={() => {
               // Authentication state will be handled by the context
-              console.log("Sign-in successful");
             }}
           />
         )}

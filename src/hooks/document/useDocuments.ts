@@ -257,23 +257,19 @@ export function useDocument(documentId: string | null) {
       
       try {
         setSaveStatus('saving');
-        console.log('Auto-saving document after user stopped typing...');
-        console.log('Content to save:', JSON.stringify(content, null, 2));
         
         const updates: Partial<Document> = { content };
         if (title) updates.title = title;
         
         await updateDocument(documentId, updates);
         setSaveStatus('saved');
-        console.log('✅ Auto-save completed successfully');
       } catch (err) {
         setSaveStatus('error');
-        console.error("❌ Auto-save failed:", err);
+        console.error("Auto-save failed:", err);
       }
     }, 3 * 1000); // 3 seconds after user stops typing (reduced from 10 seconds)
 
     autoSaveTimer.current = timer;
-    console.log('⏱️ Auto-save scheduled - will save in 3 seconds if no more changes');
   }, [documentId]);
 
   /**
@@ -289,14 +285,12 @@ export function useDocument(documentId: string | null) {
       
       if (Object.keys(updates).length > 0) {
         setSaveStatus('saving');
-        console.log('💾 Immediately saving document with updates:', updates);
         await updateDocument(documentId, updates);
         setSaveStatus('saved');
-        console.log('✅ Immediate save completed successfully');
       }
     } catch (err) {
       setSaveStatus('error');
-      console.error("❌ Immediate save failed:", err);
+              console.error("Immediate save failed:", err);
     }
   }, [documentId, document]);
 

@@ -8,11 +8,12 @@
 
 import { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { auth, db } from "@/lib/firebase/config";
 import { AuthProvider } from "@/hooks/auth/useAuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AppLayout } from "@/components/layout";
 import { DashboardPage, EditorPage } from "@/pages";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 /**
  * Main application component
@@ -22,23 +23,16 @@ import { DashboardPage, EditorPage } from "@/pages";
  */
 function App() {
   useEffect(() => {
-    /**
-     * Test Firebase connection on app initialization
-     * Logs connection status to console for debugging
-     */
+    // Test Firebase connection
     const testFirebaseConnection = async () => {
       try {
-        // Test Firebase Auth initialization
-        if (auth) {
-          console.log("✓ Firebase Auth initialized");
-        }
+        // Test Firebase Auth
+        getAuth();
         
-        // Test Firestore initialization
-        if (db) {
-          console.log("✓ Firestore initialized");
-        }
+        // Test Firestore connection
+        getFirestore();
         
-        console.log("✓ Firebase connection successful");
+        // Firebase connection successful - ready for use
       } catch (error) {
         console.error("Firebase connection error:", error);
       }

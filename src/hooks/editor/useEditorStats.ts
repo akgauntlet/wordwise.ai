@@ -134,7 +134,7 @@ const calculateStats = (text: string): EditorStats => {
  * @example
  * ```tsx
  * const stats = useEditorStats(editor);
- * console.log(`${stats.words} words, ${stats.characters} characters`);
+ * // Stats object contains: { words, characters, charactersNoSpaces, paragraphs, readingTime }
  * ```
  */
 export function useEditorStats(editor: Editor | null): EditorStats {
