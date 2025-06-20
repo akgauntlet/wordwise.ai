@@ -17,22 +17,30 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
   onSnapshot,
-  Timestamp
+  Timestamp,
+  writeBatch
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import type { 
   Document, 
   DocumentFormData, 
   TiptapContent,
-  DocumentFilter 
+  DocumentFilter,
+  DocumentVersion 
 } from "@/types/document";
 
 /**
  * Document limit per user
  */
 export const DOCUMENT_LIMIT = 100;
+
+/**
+ * Version limit per document  
+ */
+export const VERSION_LIMIT = 50;
 
 /**
  * Auto-save interval in milliseconds (2 minutes)
@@ -131,6 +139,160 @@ export async function createDocument(
 }
 
 /**
+ * Create a version snapshot of the current document
+ */
+export async function createDocumentVersion(
+  documentId: string,
+  content: TiptapContent,
+  plainText: string,
+  wordCount: number,
+  characterCount: number
+): Promise<void> {
+  try {
+    // Get current version count for this document
+    const versionsQuery = query(
+      collection(db, "document_versions"),
+      where("documentId", "==", documentId),
+      orderBy("version", "desc"),
+      limit(1)
+    );
+    
+    const versionsSnapshot = await getDocs(versionsQuery);
+    let nextVersion = 1;
+    
+    if (!versionsSnapshot.empty) {
+      const latestVersion = versionsSnapshot.docs[0].data() as DocumentVersion;
+      nextVersion = latestVersion.version + 1;
+    }
+
+    // Create the new version
+    const versionData: Omit<DocumentVersion, 'id'> = {
+      documentId,
+      version: nextVersion,
+      content,
+      plainText,
+      createdAt: serverTimestamp() as Timestamp,
+      wordCount,
+      characterCount
+    };
+
+    await addDoc(collection(db, "document_versions"), versionData);
+
+    // Clean up old versions if we exceed the limit
+    await cleanupOldVersions(documentId);
+  } catch (error) {
+    console.error("Error creating document version:", error);
+    throw error;
+  }
+}
+
+/**
+ * Clean up old versions when limit is exceeded
+ */
+async function cleanupOldVersions(documentId: string): Promise<void> {
+  try {
+    const versionsQuery = query(
+      collection(db, "document_versions"),
+      where("documentId", "==", documentId),
+      orderBy("version", "desc")
+    );
+    
+    const versionsSnapshot = await getDocs(versionsQuery);
+    
+    if (versionsSnapshot.size > VERSION_LIMIT) {
+      const batch = writeBatch(db);
+      const versionsToDelete = versionsSnapshot.docs.slice(VERSION_LIMIT);
+      
+      versionsToDelete.forEach(versionDoc => {
+        batch.delete(versionDoc.ref);
+      });
+      
+      await batch.commit();
+    }
+  } catch (error) {
+    console.error("Error cleaning up old versions:", error);
+  }
+}
+
+/**
+ * Get all versions for a document
+ */
+export async function getDocumentVersions(documentId: string): Promise<DocumentVersion[]> {
+  try {
+    const versionsQuery = query(
+      collection(db, "document_versions"),
+      where("documentId", "==", documentId),
+      orderBy("version", "desc")
+    );
+    
+    const snapshot = await getDocs(versionsQuery);
+    const versions: DocumentVersion[] = [];
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      versions.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt as Timestamp
+      } as DocumentVersion);
+    });
+    
+    return versions;
+  } catch (error) {
+    console.error("Error getting document versions:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get a specific version by ID
+ */
+export async function getDocumentVersion(versionId: string): Promise<DocumentVersion | null> {
+  try {
+    const versionRef = doc(db, "document_versions", versionId);
+    const versionSnap = await getDoc(versionRef);
+    
+    if (!versionSnap.exists()) {
+      return null;
+    }
+    
+    const data = versionSnap.data();
+    return {
+      id: versionSnap.id,
+      ...data,
+      createdAt: data.createdAt as Timestamp
+    } as DocumentVersion;
+  } catch (error) {
+    console.error("Error getting document version:", error);
+    throw error;
+  }
+}
+
+/**
+ * Delete all versions for a document (used when document is deleted)
+ */
+export async function deleteDocumentVersions(documentId: string): Promise<void> {
+  try {
+    const versionsQuery = query(
+      collection(db, "document_versions"),
+      where("documentId", "==", documentId)
+    );
+    
+    const versionsSnapshot = await getDocs(versionsQuery);
+    const batch = writeBatch(db);
+    
+    versionsSnapshot.docs.forEach(versionDoc => {
+      batch.delete(versionDoc.ref);
+    });
+    
+    await batch.commit();
+  } catch (error) {
+    console.error("Error deleting document versions:", error);
+    throw error;
+  }
+}
+
+/**
  * Update an existing document
  */
 export async function updateDocument(
@@ -154,6 +316,15 @@ export async function updateDocument(
       updateData.plainText = plainText;
       updateData.wordCount = countWords(plainText);
       updateData.characterCount = plainText.length;
+
+      // Create a version snapshot whenever content changes
+      await createDocumentVersion(
+        documentId,
+        updates.content,
+        plainText,
+        updateData.wordCount,
+        updateData.characterCount
+      );
     }
 
     await updateDoc(docRef, updateData);
@@ -168,6 +339,10 @@ export async function updateDocument(
  */
 export async function deleteDocument(documentId: string): Promise<void> {
   try {
+    // Delete all versions first
+    await deleteDocumentVersions(documentId);
+    
+    // Then delete the document
     const docRef = doc(db, "documents", documentId);
     await deleteDoc(docRef);
   } catch (error) {

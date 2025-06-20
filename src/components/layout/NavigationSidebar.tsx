@@ -15,6 +15,7 @@ import {
   Home, 
   FileText, 
   Edit3,
+  History,
   User, 
   LogOut
 } from 'lucide-react';
@@ -116,6 +117,13 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
       path: activeDocumentId ? `/editor/${activeDocumentId}` : '/editor',
       icon: Edit3,
       isActive: location.pathname.startsWith('/editor'),
+      disabled: !hasActiveDocument
+    },
+    {
+      label: 'Versions',
+      path: '/versions',
+      icon: History,
+      isActive: location.pathname === '/versions',
       disabled: !hasActiveDocument
     }
   ];

@@ -96,13 +96,7 @@ function DocumentsPageContent() {
 
 
 
-  /**
-   * Handle viewing document versions (placeholder for now)
-   */
-  const handleViewVersions = (documentId: string) => {
-    // TODO: Implement versions functionality
-    console.log("View versions for document:", documentId);
-  };
+
 
   if (loading) {
     return (
@@ -226,9 +220,7 @@ function DocumentsPageContent() {
               key={document.id}
               document={document}
               onDelete={handleDeleteDocument}
-              onViewVersions={handleViewVersions}
               isDeleting={deletingIds.has(document.id)}
-              showVersionsButton={true}
             />
           ))}
         </div>

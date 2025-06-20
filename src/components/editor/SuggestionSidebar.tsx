@@ -59,21 +59,21 @@ const SUGGESTION_CATEGORIES: SuggestionCategory[] = [
     type: 'grammar',
     title: 'Grammar',
     icon: AlertCircle,
-    color: 'error',
+    color: 'primary',
     description: 'Grammar rules and corrections'
   },
   {
     type: 'style',
     title: 'Style',
     icon: Lightbulb,
-    color: 'warning',
+    color: 'primary',
     description: 'Writing style improvements'
   },
   {
     type: 'readability',
     title: 'Readability',
     icon: BookOpen,
-    color: 'success',
+    color: 'primary',
     description: 'Text clarity and readability'
   }
 ];
@@ -83,6 +83,13 @@ const SUGGESTION_CATEGORIES: SuggestionCategory[] = [
  */
 function getCategoryColors(color: string) {
   const colorMap = {
+    primary: {
+      badge: 'bg-blue-100 text-blue-800 border-blue-200',
+      tab: 'text-blue-600 border-blue-500',
+      tabActive: 'bg-blue-50 text-blue-700 border-blue-500',
+      icon: 'text-blue-600',
+      button: 'bg-blue-600 hover:bg-blue-700'
+    },
     error: {
       badge: 'bg-red-100 text-red-800 border-red-200',
       tab: 'text-red-600 border-red-500',
@@ -381,7 +388,7 @@ export function SuggestionSidebar({
 
   return (
     <aside className={`
-      fixed right-0 top-0 w-[400px] h-screen bg-background border-l border-border z-30 flex flex-col
+      fixed right-0 top-0 w-[450px] h-screen bg-background border-l border-border z-30 flex flex-col
       transition-transform duration-300 ease-in-out
       ${className}
     `}>

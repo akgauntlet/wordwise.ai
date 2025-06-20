@@ -14,8 +14,7 @@ import {
   FileText, 
   Hash, 
   Trash2, 
-  Clock,
-  History
+  Clock
 } from "lucide-react";
 import { setActiveDocument } from "@/lib/utils";
 import { useActiveDocument } from "@/hooks/document";
@@ -27,9 +26,7 @@ import type { Document } from "@/types/document";
 interface DocumentCardProps {
   document: Document;
   onDelete: (documentId: string) => Promise<void>;
-  onViewVersions?: (documentId: string) => void;
   isDeleting?: boolean;
-  showVersionsButton?: boolean;
 }
 
 /**
@@ -38,9 +35,7 @@ interface DocumentCardProps {
 export function DocumentCard({
   document,
   onDelete,
-  onViewVersions,
-  isDeleting = false,
-  showVersionsButton = false
+  isDeleting = false
 }: DocumentCardProps) {
   const navigate = useNavigate();
   const { isActiveDocument } = useActiveDocument();
@@ -130,19 +125,6 @@ export function DocumentCard({
           
           {/* Action buttons */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {showVersionsButton && onViewVersions && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onViewVersions(document.id);
-                }}
-                title="View versions"
-              >
-                <History className="h-4 w-4" />
-              </Button>
-            )}
             <Button
               size="sm"
               variant="ghost"

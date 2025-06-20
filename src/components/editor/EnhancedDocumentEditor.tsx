@@ -49,27 +49,7 @@ interface EnhancedDocumentEditorProps {
   className?: string;
 }
 
-/**
- * Auto-save status component
- */
-function AutoSaveStatus({ saveStatus }: { saveStatus: 'saved' | 'auto-saved' | 'saving' | 'pending' | 'error' }) {
-  const statusConfig = {
-    saved: { text: 'Saved', color: 'text-blue-600', icon: null },
-    'auto-saved': { text: 'Auto-saved', color: 'text-blue-600', icon: null },
-    saving: { text: 'Saving...', color: 'text-blue-400', icon: <Loader2 className="h-4 w-4 animate-spin" /> },
-    pending: { text: 'Unsaved changes', color: 'text-black', icon: null },
-    error: { text: 'Save failed', color: 'text-red-600', icon: <AlertCircle className="h-4 w-4" /> }
-  };
 
-  const config = statusConfig[saveStatus];
-
-  return (
-    <div className={`flex items-center gap-2 text-sm font-normal ${config.color}`}>
-      {config.icon}
-      <span className={saveStatus === 'pending' ? 'italic' : ''}>{config.text}</span>
-    </div>
-  );
-}
 
 /**
  * Empty state component
@@ -211,12 +191,13 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
 
   /**
    * Memoized save button props
+   * Button is only enabled when there are unsaved changes or after a save error
    */
   const saveButtonProps = useMemo(() => ({
     variant: "outline" as const,
     size: "sm" as const,
     onClick: handleManualSave,
-    disabled: saveStatus === 'saving'
+    disabled: saveStatus === 'saving' || (saveStatus !== 'pending' && saveStatus !== 'error')
   }), [handleManualSave, saveStatus]);
 
   if (!editor) {
@@ -246,11 +227,19 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
             </div>
             
             <div className="flex items-center gap-4 flex-shrink-0">
-              <AutoSaveStatus saveStatus={saveStatus} />
               {onAutoSave && (
                 <Button {...saveButtonProps}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save
+                  {saveStatus === 'saving' ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save
+                    </>
+                  )}
                 </Button>
               )}
             </div>

@@ -1,9 +1,11 @@
 /**
- * @fileoverview Document hooks exports
+ * @fileoverview Document hooks barrel export
  * @module hooks/document
  * 
- * Usage: Centralized exports for document-related hooks
+ * Dependencies: Document hooks
+ * Usage: Central export point for all document-related hooks
  */
 
+export { useActiveDocument } from './useActiveDocument';
 export { useDocuments, useDocument } from './useDocuments';
-export { useActiveDocument } from './useActiveDocument'; 
+export { useDocumentVersions } from './useDocumentVersions'; 
