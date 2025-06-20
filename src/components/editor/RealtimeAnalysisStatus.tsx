@@ -7,6 +7,7 @@
  * Dependencies:
  * - React for component structure
  * - Tailwind CSS for styling
+ * - Lucide React for icons
  * 
  * Usage:
  * - Shows current analysis status to user
@@ -16,6 +17,17 @@
  * ACCESSIBILITY: Includes ARIA labels and screen reader support
  * RESPONSIVE: Works across all device sizes
  */
+
+import { 
+  PenTool, 
+  Clock, 
+  Sparkles, 
+  CheckCircle2, 
+  AlertCircle, 
+  StopCircle,
+  Database,
+  RotateCcw
+} from 'lucide-react';
 
 
 
@@ -76,58 +88,65 @@ export function RealtimeAnalysisStatus({
     switch (status) {
       case 'idle':
         return {
-          icon: '📝',
+          icon: <PenTool className="h-4 w-4" />,
           text: 'Ready to analyze',
-          color: 'text-gray-500',
-          bgColor: 'bg-gray-100'
+          color: 'text-slate-500',
+          bgColor: 'bg-gradient-to-r from-slate-50 to-slate-100',
+          borderColor: 'border-slate-200'
         };
       
       case 'pending':
         return {
-          icon: '⏱️',
+          icon: <Clock className="h-4 w-4 animate-pulse" />,
           text: 'Analysis starting...',
-          color: 'text-yellow-600',
-          bgColor: 'bg-yellow-100'
+          color: 'text-amber-600',
+          bgColor: 'bg-gradient-to-r from-amber-50 to-yellow-50',
+          borderColor: 'border-amber-200'
         };
       
       case 'analyzing':
         return {
-          icon: '🔄',
+          icon: <Sparkles className="h-4 w-4 animate-pulse" />,
           text: 'Analyzing text...',
           color: 'text-blue-600',
-          bgColor: 'bg-blue-100'
+          bgColor: 'bg-gradient-to-r from-blue-50 to-indigo-50',
+          borderColor: 'border-blue-200'
         };
       
       case 'complete':
         return {
-          icon: '✅',
+          icon: <CheckCircle2 className="h-4 w-4 animate-pulse" />,
           text: `Found ${suggestionsCount} suggestion${suggestionsCount !== 1 ? 's' : ''}`,
-          color: 'text-green-600',
-          bgColor: 'bg-green-100'
+          color: 'text-emerald-600',
+          bgColor: 'bg-gradient-to-r from-emerald-50 to-green-50',
+          borderColor: 'border-emerald-200'
         };
       
       case 'error':
         return {
-          icon: '❌',
+          icon: <AlertCircle className="h-4 w-4 animate-pulse" />,
           text: 'Analysis failed',
-          color: 'text-red-600',
-          bgColor: 'bg-red-100'
+          color: 'text-rose-600',
+          bgColor: 'bg-gradient-to-r from-rose-50 to-red-50',
+          borderColor: 'border-rose-200'
         };
       
       case 'cancelled':
         return {
-          icon: '🚫',
+          icon: <StopCircle className="h-4 w-4" />,
           text: 'Analysis cancelled',
-          color: 'text-gray-600',
-          bgColor: 'bg-gray-100'
+          color: 'text-gray-500',
+          bgColor: 'bg-gradient-to-r from-gray-50 to-slate-50',
+          borderColor: 'border-gray-200'
         };
       
       default:
         return {
-          icon: '📝',
+          icon: <PenTool className="h-4 w-4" />,
           text: 'Ready to analyze',
-          color: 'text-gray-500',
-          bgColor: 'bg-gray-100'
+          color: 'text-slate-500',
+          bgColor: 'bg-gradient-to-r from-slate-50 to-slate-100',
+          borderColor: 'border-slate-200'
         };
     }
   };
@@ -136,19 +155,19 @@ export function RealtimeAnalysisStatus({
 
   return (
     <div className={`
-      flex items-center justify-between px-3 py-2 rounded-lg border
-      ${statusDisplay.bgColor} ${statusDisplay.color}
-      transition-all duration-200 ease-in-out
+      flex items-center justify-between px-4 py-3 rounded-xl border shadow-sm
+      ${statusDisplay.bgColor} ${statusDisplay.color} ${statusDisplay.borderColor}
+      transition-all duration-300 ease-in-out
     `}>
       {/* Status indicator */}
       <div className="flex items-center space-x-2">
-        <span 
-          className={`text-sm ${status === 'analyzing' ? 'animate-spin' : ''}`}
+        <div 
+          className={`${statusDisplay.color}`}
           role="img" 
           aria-label={`Analysis status: ${status}`}
         >
           {statusDisplay.icon}
-        </span>
+        </div>
         
         <span className="text-sm font-medium">
           {statusDisplay.text}
@@ -157,10 +176,11 @@ export function RealtimeAnalysisStatus({
         {/* Cache indicator */}
         {status === 'complete' && cacheHit && (
           <span 
-            className="text-xs px-2 py-1 bg-white rounded-full opacity-75"
+            className="text-xs px-2 py-1 bg-white/80 rounded-full opacity-90 flex items-center gap-1 border border-white/50 shadow-sm backdrop-blur-sm"
             title="Result from cache"
           >
-            💾 Cached
+            <Database className="h-3 w-3 text-blue-500" />
+            <span className="text-slate-600">Cached</span>
           </span>
         )}
       </div>
@@ -181,9 +201,10 @@ export function RealtimeAnalysisStatus({
           {onRetry && (
             <button
               onClick={onRetry}
-              className="text-xs px-2 py-1 bg-white rounded hover:bg-gray-50 transition-colors"
+              className="text-xs px-3 py-1.5 bg-white rounded-lg transition-all duration-200 flex items-center gap-1.5 shadow-sm border border-gray-200"
               aria-label="Retry analysis"
             >
+              <RotateCcw className="h-3 w-3" />
               Retry
             </button>
           )}
@@ -194,9 +215,10 @@ export function RealtimeAnalysisStatus({
       {(status === 'pending' || status === 'analyzing') && onCancel && (
         <button
           onClick={onCancel}
-          className="text-xs px-2 py-1 bg-white rounded hover:bg-gray-50 transition-colors"
+          className="text-xs px-3 py-1.5 bg-white rounded-lg transition-all duration-200 flex items-center gap-1.5 shadow-sm border border-gray-200"
           aria-label="Cancel analysis"
         >
+          <StopCircle className="h-3 w-3" />
           Cancel
         </button>
       )}
@@ -213,21 +235,31 @@ export function CompactAnalysisStatus({
 }: Pick<RealtimeAnalysisStatusProps, 'status' | 'suggestionsCount'>) {
   const getStatusIcon = () => {
     switch (status) {
-      case 'analyzing': return '🔄';
-      case 'complete': return '✅';
-      case 'error': return '❌';
-      case 'pending': return '⏱️';
-      default: return '📝';
+      case 'analyzing': return <Sparkles className="h-3 w-3 animate-pulse" />;
+      case 'complete': return <CheckCircle2 className="h-3 w-3" />;
+      case 'error': return <AlertCircle className="h-3 w-3" />;
+      case 'pending': return <Clock className="h-3 w-3 animate-pulse" />;
+      default: return <PenTool className="h-3 w-3" />;
+    }
+  };
+
+  const getStatusColor = () => {
+    switch (status) {
+      case 'analyzing': return 'text-blue-600';
+      case 'complete': return 'text-emerald-600';
+      case 'error': return 'text-rose-600';
+      case 'pending': return 'text-amber-600';
+      default: return 'text-slate-500';
     }
   };
 
   return (
-    <div className="flex items-center space-x-1 text-xs text-gray-600">
-      <span className={status === 'analyzing' ? 'animate-spin' : ''}>
+    <div className="flex items-center space-x-1 text-xs">
+      <div className={getStatusColor()}>
         {getStatusIcon()}
-      </span>
+      </div>
       {status === 'complete' && (
-        <span>{suggestionsCount}</span>
+        <span className="text-gray-600">{suggestionsCount}</span>
       )}
     </div>
   );

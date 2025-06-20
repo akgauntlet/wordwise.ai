@@ -217,7 +217,7 @@ export function useDocument(documentId: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'pending' | 'error'>('saved');
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'auto-saved' | 'saving' | 'pending' | 'error'>('saved');
   const isInitialLoad = useRef(true);
 
   /**
@@ -251,7 +251,7 @@ export function useDocument(documentId: string | null) {
     // Set status to pending (user has unsaved changes)
     setSaveStatus('pending');
 
-    // Set a new timer - only saves if user stops typing for 3 seconds
+    // Set a new timer - only saves if user stops typing for 2 minutes
     const timer = setTimeout(async () => {
       if (!documentId) return;
       
@@ -262,12 +262,12 @@ export function useDocument(documentId: string | null) {
         if (title) updates.title = title;
         
         await updateDocument(documentId, updates);
-        setSaveStatus('saved');
+        setSaveStatus('auto-saved');
       } catch (err) {
         setSaveStatus('error');
         console.error("Auto-save failed:", err);
       }
-    }, 3 * 1000); // 3 seconds after user stops typing (reduced from 10 seconds)
+    }, 2 * 60 * 1000); // 2 minutes after user stops typing
 
     autoSaveTimer.current = timer;
   }, [documentId]);

@@ -43,7 +43,7 @@ interface EnhancedDocumentEditorProps {
   /** Callback for auto-save */
   onAutoSave?: (content: TiptapContent, plainText: string) => Promise<void>;
   /** External save status from useDocument hook */
-  saveStatus?: 'saved' | 'saving' | 'pending' | 'error';
+  saveStatus?: 'saved' | 'auto-saved' | 'saving' | 'pending' | 'error';
   /** Additional CSS classes */
   className?: string;
 }
@@ -51,12 +51,13 @@ interface EnhancedDocumentEditorProps {
 /**
  * Auto-save status component
  */
-function AutoSaveStatus({ saveStatus }: { saveStatus: 'saved' | 'saving' | 'pending' | 'error' }) {
+function AutoSaveStatus({ saveStatus }: { saveStatus: 'saved' | 'auto-saved' | 'saving' | 'pending' | 'error' }) {
   const statusConfig = {
-    saved: { text: 'Saved', color: 'text-success-600', icon: null },
-    saving: { text: 'Saving...', color: 'text-neutral-600', icon: <Loader2 className="h-3 w-3 animate-spin" /> },
-    pending: { text: 'Unsaved changes', color: 'text-warning-600', icon: null },
-    error: { text: 'Save failed', color: 'text-error-600', icon: <AlertCircle className="h-3 w-3" /> }
+    saved: { text: 'Saved', color: 'text-green-600', icon: null },
+    'auto-saved': { text: 'Auto-saved', color: 'text-green-600', icon: null },
+    saving: { text: 'Saving...', color: 'text-lime-600', icon: <Loader2 className="h-3 w-3 animate-spin" /> },
+    pending: { text: 'Unsaved changes', color: 'text-yellow-600', icon: null },
+    error: { text: 'Save failed', color: 'text-red-600', icon: <AlertCircle className="h-3 w-3" /> }
   };
 
   const config = statusConfig[saveStatus];
@@ -219,9 +220,9 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
   }
 
   return (
-    <div className={`flex gap-6 h-full ${className}`}>
+    <>
       {/* Main Editor Area */}
-      <div className="flex-1 space-y-4">
+      <div className={`h-full space-y-4 ${showSuggestionSidebar && !readOnly ? 'pr-80' : ''} ${className}`}>
         {/* Header with title and auto-save status */}
         <div className="flex items-center justify-between">
           <div>
@@ -288,7 +289,7 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
         </Card>
       </div>
 
-      {/* Suggestion Sidebar */}
+      {/* Suggestion Sidebar - Fixed positioned */}
       {showSuggestionSidebar && !readOnly && (
         <SuggestionSidebar
           suggestions={suggestions}
@@ -310,6 +311,6 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
         onReject={handlePopoverReject}
         onClose={handlePopoverClose}
       />
-    </div>
+    </>
   );
 }); 

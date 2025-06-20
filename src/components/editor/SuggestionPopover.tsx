@@ -64,31 +64,31 @@ function getSuggestionColors(type: WritingSuggestion['type']) {
   switch (type) {
     case 'grammar':
       return {
-        badge: 'bg-error-100 text-error-800 border-error-200',
-        border: 'border-error-200',
-        icon: 'text-error-600',
-        button: 'bg-error-600 hover:bg-error-700'
+        badge: 'bg-red-100 text-red-800 border-red-200',
+        border: 'border-red-200',
+        icon: 'text-red-600',
+        button: 'bg-red-600 hover:bg-red-700'
       };
     case 'style':
       return {
-        badge: 'bg-warning-100 text-warning-800 border-warning-200',
-        border: 'border-warning-200',
-        icon: 'text-warning-600',
-        button: 'bg-warning-600 hover:bg-warning-700'
+        badge: 'bg-amber-100 text-amber-800 border-amber-200',
+        border: 'border-amber-200',
+        icon: 'text-amber-600',
+        button: 'bg-amber-600 hover:bg-amber-700'
       };
     case 'readability':
       return {
-        badge: 'bg-success-100 text-success-800 border-success-200',
-        border: 'border-success-200',
-        icon: 'text-success-600',
-        button: 'bg-success-600 hover:bg-success-700'
+        badge: 'bg-green-100 text-green-800 border-green-200',
+        border: 'border-green-200',
+        icon: 'text-green-600',
+        button: 'bg-green-600 hover:bg-green-700'
       };
     default:
       return {
-        badge: 'bg-neutral-100 text-neutral-800 border-neutral-200',
-        border: 'border-neutral-200',
-        icon: 'text-neutral-600',
-        button: 'bg-neutral-600 hover:bg-neutral-700'
+        badge: 'bg-gray-100 text-gray-800 border-gray-200',
+        border: 'border-gray-200',
+        icon: 'text-gray-600',
+        button: 'bg-gray-600 hover:bg-gray-700'
       };
   }
 }

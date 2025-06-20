@@ -39,7 +39,7 @@ interface DocumentEditorProps {
   /** Callback for auto-save */
   onAutoSave?: (content: TiptapContent, plainText: string) => Promise<void>;
   /** External save status from useDocument hook */
-  saveStatus?: 'saved' | 'saving' | 'pending' | 'error';
+  saveStatus?: 'saved' | 'auto-saved' | 'saving' | 'pending' | 'error';
   /** Additional CSS classes */
   className?: string;
 }
@@ -51,7 +51,7 @@ const AutoSaveStatus = memo(({ saveStatus }: { saveStatus: string }) => {
   switch (saveStatus) {
     case 'saving':
       return (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-lime-600">
           <Loader2 className="h-3 w-3 animate-spin" />
           Saving...
         </div>
@@ -63,6 +63,13 @@ const AutoSaveStatus = memo(({ saveStatus }: { saveStatus: string }) => {
           Saved
         </div>
       );
+    case 'auto-saved':
+      return (
+        <div className="flex items-center gap-2 text-sm text-green-600">
+          <Save className="h-3 w-3" />
+          Auto-saved
+        </div>
+      );
     case 'error':
       return (
         <div className="flex items-center gap-2 text-sm text-red-600">
@@ -72,8 +79,8 @@ const AutoSaveStatus = memo(({ saveStatus }: { saveStatus: string }) => {
       );
     case 'pending':
       return (
-        <div className="flex items-center gap-2 text-sm text-orange-600">
-          <div className="w-2 h-2 bg-orange-500 rounded-full" />
+        <div className="flex items-center gap-2 text-sm text-yellow-600">
+          <div className="w-2 h-2 bg-yellow-500 rounded-full" />
           Unsaved changes
         </div>
       );

@@ -35,9 +35,9 @@ import type {
 export const DOCUMENT_LIMIT = 100;
 
 /**
- * Auto-save interval in milliseconds (5 minutes)
+ * Auto-save interval in milliseconds (2 minutes)
  */
-export const AUTO_SAVE_INTERVAL = 5 * 60 * 1000;
+export const AUTO_SAVE_INTERVAL = 2 * 60 * 1000;
 
 /**
  * Convert plain text from Tiptap content
