@@ -61,6 +61,7 @@ function getSuggestionClasses(type: WritingSuggestion['type']): string {
 
 /**
  * Find current position of suggestion text in document using ProseMirror's text handling
+ * Improved to handle word boundaries and avoid substring collisions
  */
 function findSuggestionPosition(doc: Node, suggestion: WritingSuggestion): { from: number; to: number } | null {
   const originalText = suggestion.originalText;
@@ -70,43 +71,78 @@ function findSuggestionPosition(doc: Node, suggestion: WritingSuggestion): { fro
     return null;
   }
   
-     // Helper function to find all text positions in the document
-   const findTextPositions = (searchText: string): Array<{ from: number; to: number }> => {
-     const positions: Array<{ from: number; to: number }> = [];
-     
-     // Walk through the document node by node
-     doc.descendants((node, pos) => {
-       if (node.isText && node.text) {
-         const text = node.text;
-         let searchFrom = 0;
-         
-         while (searchFrom < text.length) {
-           const index = text.indexOf(searchText, searchFrom);
-           if (index === -1) break;
-           
-           const absoluteFrom = pos + index;
-           const absoluteTo = absoluteFrom + searchText.length;
-           
-           // Verify this position contains the exact text
-           try {
-             const actualText = doc.textBetween(absoluteFrom, absoluteTo);
-             if (actualText === searchText) {
-               positions.push({ from: absoluteFrom, to: absoluteTo });
-             }
-           } catch {
-             // Position might be invalid, skip it
-           }
-           
-           searchFrom = index + 1;
-         }
-       }
-       return true; // Continue traversal
-     });
-     
-     return positions;
-   };
+  // Helper function to check if a character is a word boundary
+  const isWordBoundary = (text: string, index: number): boolean => {
+    if (index < 0 || index >= text.length) return true;
+    const char = text[index];
+    return /\s|[^\w]/.test(char);
+  };
+
+  // Helper function to find all text positions in the document with word boundary checking
+  const findTextPositions = (searchText: string): Array<{ from: number; to: number }> => {
+    const positions: Array<{ from: number; to: number }> = [];
+    
+    // Walk through the document node by node
+    doc.descendants((node, pos) => {
+      if (node.isText && node.text) {
+        const text = node.text;
+        let searchFrom = 0;
+        
+        while (searchFrom < text.length) {
+          const index = text.indexOf(searchText, searchFrom);
+          if (index === -1) break;
+          
+          const absoluteFrom = pos + index;
+          const absoluteTo = absoluteFrom + searchText.length;
+          
+          // For short words (≤3 characters), check word boundaries to avoid substring matches
+          const isShortWord = searchText.length <= 3;
+          const hasProperBoundaries = isShortWord ? 
+            isWordBoundary(text, index - 1) && isWordBoundary(text, index + searchText.length) :
+            true;
+          
+          if (hasProperBoundaries) {
+            // Verify this position contains the exact text
+            try {
+              const actualText = doc.textBetween(absoluteFrom, absoluteTo);
+              if (actualText === searchText) {
+                positions.push({ from: absoluteFrom, to: absoluteTo });
+              }
+            } catch {
+              // Position might be invalid, skip it
+            }
+          }
+          
+          searchFrom = index + 1;
+        }
+      }
+      return true; // Continue traversal
+    });
+    
+    return positions;
+  };
+
+  // Try to use exact position first if available
+  if (typeof suggestion.startOffset === 'number' && typeof suggestion.endOffset === 'number') {
+    const expectedLength = suggestion.endOffset - suggestion.startOffset;
+    
+    // Only use exact position if the length matches the original text
+    if (expectedLength === originalText.length) {
+      try {
+        // Check if the exact position still contains our text
+        const textAtPosition = doc.textBetween(suggestion.startOffset, suggestion.endOffset);
+        if (textAtPosition === originalText) {
+          console.log(`Using exact position for suggestion ${suggestion.id}: ${suggestion.startOffset}-${suggestion.endOffset}`);
+          return { from: suggestion.startOffset, to: suggestion.endOffset };
+        }
+      } catch {
+        // Exact position is invalid, fall back to search
+        console.log(`Exact position invalid for suggestion ${suggestion.id}, falling back to search`);
+      }
+    }
+  }
   
-  // Find all positions where the original text appears
+  // Fall back to finding all positions where the original text appears
   const positions = findTextPositions(originalText);
   
   if (positions.length === 0) {
@@ -117,6 +153,7 @@ function findSuggestionPosition(doc: Node, suggestion: WritingSuggestion): { fro
   
   if (positions.length === 1) {
     // Only one occurrence, use it
+    console.log(`Single occurrence found for suggestion ${suggestion.id}: ${positions[0].from}-${positions[0].to}`);
     return positions[0];
   }
   
