@@ -128,7 +128,7 @@ export const analyzeText = onCall(
       
       // Call OpenAI API
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini', // Cost-effective model for text analysis
+        model: 'gpt-4o', // High-quality model for enhanced text analysis
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }

@@ -24,6 +24,7 @@ initializeApp();
 export { analyzeText } from './ai/analyzeText';
 export { analyzeTextRealtime } from './ai/analyzeTextRealtime';
 export { parseDocument } from './document/parseDocument';
+export { generateExport, generateExportHttp, downloadExport } from './document/generateExport';
 
 // Future functions will be exported here as they are implemented:
 // export { manageVersions } from './document/manageVersions';

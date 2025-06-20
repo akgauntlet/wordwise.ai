@@ -125,11 +125,11 @@ export const analyzeTextRealtime = onCall(
       const userPrompt = generateLightweightUserPrompt(content);
       
       console.log(`[RT-${requestId}] Sending lightweight request to OpenAI`);
-      console.log(`[RT-${requestId}] Request details: model=gpt-4o-mini, content_length=${content.length}`);
+      console.log(`[RT-${requestId}] Request details: model=gpt-4o, content_length=${content.length}`);
       
       // Call OpenAI API with optimized parameters for speed
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini', // Fast, cost-effective model
+        model: 'gpt-4o', // High-quality model for enhanced analysis
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }

@@ -11,22 +11,26 @@ import { EditorContent } from '@tiptap/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Save, AlertCircle } from 'lucide-react';
+import { Loader2, Save, AlertCircle, Download } from 'lucide-react';
 import { EditorToolbar } from './EditorToolbar';
 import { EditorStats } from './EditorStats';
 import { EditableTitle } from './EditableTitle';
 import { SuggestionSidebar } from './SuggestionSidebar';
 import { SuggestionPopover } from './SuggestionPopover';
 import { RealtimeAnalysisStatus } from './RealtimeAnalysisStatus';
+import { DocumentExportDialog } from './DocumentExportDialog';
 import { useEditorWithSuggestions } from '@/hooks/editor';
 import { calculateSmartPopoverPosition } from '@/utils/popoverPositioning';
-import type { TiptapContent } from '@/types/document';
+import { exportService } from '@/services/document/exportService';
+import type { TiptapContent, ExportFileFormat, ExportOptions } from '@/types/document';
 import type { WritingSuggestion } from './SuggestionExtension';
 
 /**
  * Enhanced document editor props
  */
 interface EnhancedDocumentEditorProps {
+  /** Document ID for export functionality */
+  documentId?: string;
   /** Initial document content */
   initialContent?: TiptapContent | string;
   /** Document title */
@@ -80,6 +84,7 @@ function EmptyState({ readOnly }: { readOnly: boolean }) {
  * click-based popovers, and comprehensive suggestion management.
  */
 export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
+  documentId,
   initialContent = '',
   title = 'Untitled Document',
   targetWords = 500,
@@ -93,6 +98,8 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
 }: EnhancedDocumentEditorProps) {
   const [selectedSuggestion, setSelectedSuggestion] = useState<WritingSuggestion | null>(null);
   const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   /**
    * Handle content updates from the editor - memoized to prevent re-creation
@@ -182,6 +189,51 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
   }, [rejectSuggestion]);
 
   /**
+   * Handle export button click
+   */
+  const handleExportClick = useCallback(() => {
+    setShowExportDialog(true);
+  }, []);
+
+  /**
+   * Handle export dialog close
+   */
+  const handleExportDialogClose = useCallback(() => {
+    if (!isExporting) {
+      setShowExportDialog(false);
+    }
+  }, [isExporting]);
+
+  /**
+   * Handle export initiation
+   */
+  const handleExport = useCallback(async (format: ExportFileFormat, options: ExportOptions) => {
+    if (!editor) return;
+
+    setIsExporting(true);
+
+    try {
+      const content = editor.getJSON() as TiptapContent;
+      
+      await exportService.exportDocument(
+        documentId || 'untitled-document',
+        title,
+        content,
+        format,
+        options
+      );
+
+      // Close dialog on successful export
+      setShowExportDialog(false);
+    } catch (error) {
+      console.error('Export failed:', error);
+      // Dialog stays open on error so user can retry
+    } finally {
+      setIsExporting(false);
+    }
+  }, [editor, title]);
+
+  /**
    * Memoized editor content container classes
    */
   const editorContentClasses = useMemo(() => `
@@ -226,9 +278,12 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
               />
             </div>
             
-            <div className="flex items-center gap-4 flex-shrink-0">
+            <div className="flex items-center gap-3 flex-shrink-0">
               {onAutoSave && (
-                <Button {...saveButtonProps}>
+                <Button 
+                  {...saveButtonProps}
+                  className="border-primary/20 hover:bg-primary/5 hover:border-primary/30 transition-colors"
+                >
                   {saveStatus === 'saving' ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -240,6 +295,19 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
                       Save
                     </>
                   )}
+                </Button>
+              )}
+              
+              {!readOnly && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleExportClick}
+                  disabled={isExporting}
+                  className="border border-border/50 hover:bg-muted/50 hover:border-border transition-colors"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
                 </Button>
               )}
             </div>
@@ -314,6 +382,15 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
         onAccept={handlePopoverAccept}
         onReject={handlePopoverReject}
         onClose={handlePopoverClose}
+      />
+
+      {/* Export Dialog */}
+      <DocumentExportDialog
+        isOpen={showExportDialog}
+        onClose={handleExportDialogClose}
+        onExport={handleExport}
+        documentTitle={title}
+        isExporting={isExporting}
       />
     </>
   );

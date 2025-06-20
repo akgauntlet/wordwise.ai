@@ -139,6 +139,7 @@ function EditorPageContent() {
         <div className="h-[calc(100vh-8rem)]">
           {document ? (
             <EnhancedDocumentEditor
+              documentId={documentId}
               initialContent={document.content}
               title={currentTitle}
               targetWords={500}

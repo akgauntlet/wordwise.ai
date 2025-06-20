@@ -78,6 +78,43 @@ export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
 /**
+ * Get Firebase Functions URL based on environment
+ * @returns The appropriate Firebase Functions URL for the current environment
+ */
+export function getFunctionsUrl(): string {
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  const port = window.location.port;
+  
+  console.log('[getFunctionsUrl] Current location:', { hostname, protocol, port });
+  
+  // If running on localhost (local development)
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    const localUrl = `http://localhost:5001/${config.projectId}/us-central1`;
+    console.log('[getFunctionsUrl] Using local emulator:', localUrl);
+    return localUrl;
+  }
+  
+  // Check if we're on Firebase Hosting by looking for specific domains
+  const isFirebaseHosting = 
+    hostname.includes('.web.app') ||
+    hostname.includes('.firebaseapp.com') ||
+    hostname.includes('firebase') ||
+    // Also check for your specific project domain
+    hostname.includes('wordwise-ai-2024-12');
+  
+  if (isFirebaseHosting) {
+    console.log('[getFunctionsUrl] Detected Firebase Hosting, using rewrites: /api');
+    return '/api'; // Uses Firebase hosting rewrites
+  }
+  
+  // Fallback to production URL for any other domain
+  const productionUrl = `https://us-central1-${config.projectId}.cloudfunctions.net`;
+  console.log('[getFunctionsUrl] Using production URL:', productionUrl);
+  return productionUrl;
+}
+
+/**
  * Firebase project configuration for reference
  */
 export const config = {

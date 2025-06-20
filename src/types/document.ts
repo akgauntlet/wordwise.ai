@@ -296,4 +296,88 @@ export interface ImportOperation {
   completedAt?: Date;
 }
 
+/**
+ * Supported export file formats
+ */
+export type ExportFileFormat = 'txt' | 'md' | 'docx' | 'pdf';
+
+/**
+ * Export formatting presets
+ */
+export type ExportPreset = 'default' | 'academic' | 'business';
+
+/**
+ * Export customization options
+ */
+export interface ExportOptions {
+  /** Font family */
+  fontFamily: string;
+  /** Font size in points */
+  fontSize: number;
+  /** Line spacing (1.0, 1.15, 1.5, 2.0) */
+  lineSpacing: number;
+  /** Page margins in inches */
+  margins: {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  };
+}
+
+/**
+ * Export preset configurations
+ */
+export const EXPORT_PRESETS: Record<ExportPreset, ExportOptions> = {
+  default: {
+    fontFamily: 'Arial',
+    fontSize: 12,
+    lineSpacing: 1.15,
+    margins: { top: 1, bottom: 1, left: 1, right: 1 }
+  },
+  academic: {
+    fontFamily: 'Times New Roman',
+    fontSize: 12,
+    lineSpacing: 2.0,
+    margins: { top: 1, bottom: 1, left: 1, right: 1 }
+  },
+  business: {
+    fontFamily: 'Calibri',
+    fontSize: 11,
+    lineSpacing: 1.15,
+    margins: { top: 0.75, bottom: 0.75, left: 0.75, right: 0.75 }
+  }
+};
+
+/**
+ * Export operation status
+ */
+export type ExportStatus = 'idle' | 'exporting' | 'complete' | 'error';
+
+/**
+ * Export operation data
+ */
+export interface ExportOperation {
+  /** Unique operation identifier */
+  id: string;
+  /** Document being exported */
+  documentId: string;
+  /** Export format */
+  format: ExportFileFormat;
+  /** Export options used */
+  options: ExportOptions;
+  /** Current status */
+  status: ExportStatus;
+  /** Progress percentage (0-100) */
+  progress: number;
+  /** Download URL when complete */
+  downloadUrl?: string;
+  /** Error message if operation failed */
+  error?: string;
+  /** Timestamp when operation started */
+  startedAt: Date;
+  /** Timestamp when operation completed */
+  completedAt?: Date;
+}
+
  

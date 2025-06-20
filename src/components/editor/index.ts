@@ -4,6 +4,7 @@
  */
 
 export { DocumentEditor } from './DocumentEditor';
+export { DocumentExportDialog } from './DocumentExportDialog';
 export { EnhancedDocumentEditor } from './EnhancedDocumentEditor';
 export { EditorToolbar } from './EditorToolbar';
 export { EditorStats } from './EditorStats';

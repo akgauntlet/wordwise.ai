@@ -30,6 +30,9 @@ dist-ssr
 .env.test.local
 .env.production.local
 
+# Don't commit production env file (contains secrets)
+.env.production
+
 # Firebase
 .firebase/
 .firebaserc

@@ -17,4 +17,5 @@
 export { analyzeText } from './ai/analyzeText';
 export { analyzeTextRealtime } from './ai/analyzeTextRealtime';
 export { parseDocument } from './document/parseDocument';
+export { generateExport, generateExportHttp, downloadExport } from './document/generateExport';
 //# sourceMappingURL=index.d.ts.map

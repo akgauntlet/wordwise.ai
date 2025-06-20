@@ -7,6 +7,7 @@
  */
 
 import { createDocument } from './documentService';
+import { getFunctionsUrl } from '@/lib/firebase/config';
 import type { 
   ImportOperation, 
   ImportFileFormat, 
@@ -139,7 +140,12 @@ export class DocumentImporter {
       this.updateStatus('parsing', 30, 'Parsing document content...');
 
       // Call Firebase Function to parse the document
-      console.log('Sending request to:', `${import.meta.env.VITE_FIREBASE_FUNCTIONS_URL}/parseDocument/parse`);
+      const functionsUrl = getFunctionsUrl();
+      const endpoint = functionsUrl.startsWith('/api') 
+        ? `${functionsUrl}/parseDocument/parse`
+        : `${functionsUrl}/parseDocument/parse`;
+      
+      console.log('Sending request to:', endpoint);
       console.log('File details:', { 
         name: file.name, 
         size: file.size, 
@@ -150,7 +156,7 @@ export class DocumentImporter {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
       
-      const response = await fetch(`${import.meta.env.VITE_FIREBASE_FUNCTIONS_URL}/parseDocument/parse`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
         signal: controller.signal,
