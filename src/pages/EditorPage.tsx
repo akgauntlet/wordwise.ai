@@ -6,11 +6,11 @@
  * Usage: Main editor page route with document management
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { DocumentEditor } from '@/components/editor';
+import { EnhancedDocumentEditor } from '@/components/editor';
 import { useAuth } from '@/hooks/auth/useAuthContext';
 import { useDocument } from '@/hooks/document';
 import { PageErrorBoundary } from '@/components/layout';
@@ -28,7 +28,7 @@ function EditorPageContent() {
 
   const { document, loading, error, saveStatus, updateContent, saveDocument } = useDocument(documentId || null);
   
-  const [showDetailedStats] = useState(true);
+
   const [currentTitle, setCurrentTitle] = useState('');
 
   /**
@@ -132,36 +132,22 @@ function EditorPageContent() {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Editor */}
-          <div className={`${showDetailedStats ? 'lg:col-span-3' : 'lg:col-span-4'}`}>
-            {document ? (
-              <DocumentEditor
-                initialContent={document.content}
-                title={currentTitle}
-                targetWords={500}
-                onContentChange={handleContentChange}
-                onTitleChange={handleTitleChange}
-                onAutoSave={handleManualSave} // Manual save handled by useDocument hook
-                saveStatus={saveStatus}
-                className="w-full"
-              />
-            ) : (
-              <div className="flex items-center justify-center py-12">
-                <p className="text-muted-foreground">Loading document...</p>
-              </div>
-            )}
-          </div>
-
-          {/* Detailed statistics sidebar */}
-          {showDetailedStats && (
-            <div className="lg:col-span-1">
-              <div className="sticky top-24">
-                {/* This will be populated by the DocumentEditor's detailed stats */}
-                <div className="text-center text-muted-foreground p-4">
-                  <p className="text-sm">Detailed statistics are shown above the editor when available.</p>
-                </div>
-              </div>
+        <div className="h-[calc(100vh-8rem)]">
+          {document ? (
+            <EnhancedDocumentEditor
+              initialContent={document.content}
+              title={currentTitle}
+              targetWords={500}
+              showSuggestionSidebar={true}
+              onContentChange={handleContentChange}
+              onTitleChange={handleTitleChange}
+              onAutoSave={handleManualSave} // Manual save handled by useDocument hook
+              saveStatus={saveStatus}
+              className="w-full h-full"
+            />
+          ) : (
+            <div className="flex items-center justify-center py-12">
+              <p className="text-muted-foreground">Loading document...</p>
             </div>
           )}
         </div>

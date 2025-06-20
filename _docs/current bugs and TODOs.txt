@@ -1,0 +1,3 @@
+the ui does not immediately respond to closing the google signin popup (might be CORS-related?)
+
+when logging in with wrong credentials, should return a message saying something along the lines instead of "an unexpected error occurred"

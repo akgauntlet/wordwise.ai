@@ -180,6 +180,11 @@
   background-color: hsl(var(--primary) / 0.2);
 }
 
+/* Suggestion highlighting styles with wavy underlines */
+.border-wavy {
+  border-style: wavy;
+}
+
 /* Suggestion highlighting styles */
 .suggestion-spelling {
   background-color: hsl(var(--suggestion-spelling) / 0.1);
