@@ -7,7 +7,7 @@
  */
 
 import { createDocument } from './documentService';
-import { getFunctionsUrl } from '@/lib/firebase/config';
+import { getParseDocumentUrl } from '@/lib/firebase/config';
 import type { 
   ImportOperation, 
   ImportFileFormat, 
@@ -140,10 +140,8 @@ export class DocumentImporter {
       this.updateStatus('parsing', 30, 'Parsing document content...');
 
       // Call Firebase Function to parse the document
-      const functionsUrl = getFunctionsUrl();
-      const endpoint = functionsUrl.startsWith('/api') 
-        ? `${functionsUrl}/parseDocument/parse`
-        : `${functionsUrl}/parseDocument/parse`;
+      const functionsUrl = getParseDocumentUrl();
+      const endpoint = `${functionsUrl}/parse`;
       
       console.log('Sending request to:', endpoint);
       console.log('File details:', { 

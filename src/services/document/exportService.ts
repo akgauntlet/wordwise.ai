@@ -6,7 +6,7 @@
  * Usage: Handles both client-side and server-side document exports
  */
 
-import { getFunctionsUrl } from '@/lib/firebase/config';
+import { getGenerateExportUrl } from '@/lib/firebase/config';
 import { exportAsTxt, exportAsMarkdown } from '@/utils/documentExport';
 import type { 
   TiptapContent, 
@@ -65,10 +65,8 @@ class DocumentExportService {
    * Get the HTTP endpoint URL for the export function
    */
   private getHttpEndpointUrl(): string {
-    const functionsUrl = getFunctionsUrl();
-    const endpoint = functionsUrl.startsWith('/api') 
-      ? `${functionsUrl}/generateExportHttp`
-      : `${functionsUrl}/generateExportHttp`;
+    const functionsUrl = getGenerateExportUrl();
+    const endpoint = `${functionsUrl}/generate`;
     
     console.log('[ExportService] Using endpoint:', endpoint);
     return endpoint;

@@ -115,6 +115,60 @@ export function getFunctionsUrl(): string {
 }
 
 /**
+ * Get specific function URLs for production (Cloud Run URLs)
+ * Temporary workaround until Firebase Hosting rewrites are fixed
+ */
+export function getParseDocumentUrl(): string {
+  const hostname = window.location.hostname;
+  
+  // If running on localhost (local development)
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `http://localhost:5001/${config.projectId}/us-central1/parseDocument`;
+  }
+  
+  // For production, use direct Cloud Run URL
+  const isFirebaseHosting = 
+    hostname.includes('.web.app') ||
+    hostname.includes('.firebaseapp.com') ||
+    hostname.includes('firebase') ||
+    hostname.includes('wordwise-ai-2024-12');
+  
+  if (isFirebaseHosting) {
+    return 'https://parsedocument-luaeihsctq-uc.a.run.app';
+  }
+  
+  // Fallback to Cloud Run URL
+  return 'https://parsedocument-luaeihsctq-uc.a.run.app';
+}
+
+/**
+ * Get specific function URLs for production (Cloud Run URLs)
+ * Temporary workaround until Firebase Hosting rewrites are fixed
+ */
+export function getGenerateExportUrl(): string {
+  const hostname = window.location.hostname;
+  
+  // If running on localhost (local development)
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `http://localhost:5001/${config.projectId}/us-central1/generateExportHttp`;
+  }
+  
+  // For production, use direct Cloud Run URL
+  const isFirebaseHosting = 
+    hostname.includes('.web.app') ||
+    hostname.includes('.firebaseapp.com') ||
+    hostname.includes('firebase') ||
+    hostname.includes('wordwise-ai-2024-12');
+  
+  if (isFirebaseHosting) {
+    return 'https://generateexporthttp-luaeihsctq-uc.a.run.app';
+  }
+  
+  // Fallback to Cloud Run URL
+  return 'https://generateexporthttp-luaeihsctq-uc.a.run.app';
+}
+
+/**
  * Firebase project configuration for reference
  */
 export const config = {
