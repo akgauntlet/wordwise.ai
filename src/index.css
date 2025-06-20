@@ -27,8 +27,9 @@
     
     /* Custom variables for writing assistant */
     --suggestion-spelling: 0 84.2% 60.2%; /* Red for spelling errors */
-    --suggestion-grammar: 142.1 76.2% 36.3%; /* Green for grammar suggestions */
+    --suggestion-grammar: 0 84.2% 60.2%; /* Red for grammar suggestions */
     --suggestion-style: 221.2 83.2% 53.3%; /* Blue for style improvements */
+    --suggestion-readability: 142.1 76.2% 36.3%; /* Green for readability suggestions */
   }
 
   .dark {
@@ -54,8 +55,9 @@
     
     /* Dark mode custom variables for writing assistant */
     --suggestion-spelling: 0 62.8% 30.6%;
-    --suggestion-grammar: 142.1 70.6% 45.3%;
+    --suggestion-grammar: 0 62.8% 30.6%;
     --suggestion-style: 217.2 91.2% 59.8%;
+    --suggestion-readability: 142.1 70.6% 45.3%;
   }
 }
 
@@ -201,5 +203,11 @@
 .suggestion-style {
   background-color: hsl(var(--suggestion-style) / 0.1);
   border-bottom: 2px solid hsl(var(--suggestion-style));
+  cursor: pointer;
+}
+
+.suggestion-readability {
+  background-color: hsl(var(--suggestion-readability) / 0.1);
+  border-bottom: 2px solid hsl(var(--suggestion-readability));
   cursor: pointer;
 }

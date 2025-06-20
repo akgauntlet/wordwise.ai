@@ -45,15 +45,16 @@ const suggestionPluginKey = new PluginKey('suggestions');
  * Get CSS classes for suggestion type
  */
 function getSuggestionClasses(type: WritingSuggestion['type']): string {
-  const baseClasses = 'cursor-pointer transition-colors duration-150';
+  const baseClasses = 'transition-colors duration-150';
   
   switch (type) {
     case 'grammar':
-      return `${baseClasses} border-b-2 border-wavy border-error-600 bg-error-50/30 hover:bg-error-50/50`;
+      return `${baseClasses} suggestion-grammar`;
     case 'style':
-      return `${baseClasses} border-b-2 border-wavy border-warning-600 bg-warning-50/30 hover:bg-warning-50/50`;
+      return `${baseClasses} suggestion-style`;
     case 'readability':
-      return `${baseClasses} border-b-2 border-wavy border-success-600 bg-success-50/30 hover:bg-success-50/50`;
+      // Use dedicated styling for readability suggestions (green)
+      return `${baseClasses} suggestion-readability`;
     default:
       return baseClasses;
   }

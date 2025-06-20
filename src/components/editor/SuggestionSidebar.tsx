@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getSuggestionCategoryDisplay } from '@/lib/utils';
 import { 
-  AlertCircle, 
-  Lightbulb, 
-  BookOpen,
+  BookOpen, 
+  Pen, 
+  BarChart3,
   Check,
   X,
   CheckCheck
@@ -46,7 +46,7 @@ interface SuggestionSidebarProps {
 interface SuggestionCategory {
   type: WritingSuggestion['type'];
   title: string;
-  icon: typeof AlertCircle;
+  icon: typeof BookOpen;
   color: string;
   description: string;
 }
@@ -58,22 +58,22 @@ const SUGGESTION_CATEGORIES: SuggestionCategory[] = [
   {
     type: 'grammar',
     title: 'Grammar',
-    icon: AlertCircle,
-    color: 'primary',
+    icon: BookOpen,
+    color: 'error',
     description: 'Grammar rules and corrections'
   },
   {
     type: 'style',
     title: 'Style',
-    icon: Lightbulb,
+    icon: Pen,
     color: 'primary',
     description: 'Writing style improvements'
   },
   {
     type: 'readability',
     title: 'Readability',
-    icon: BookOpen,
-    color: 'primary',
+    icon: BarChart3,
+    color: 'success',
     description: 'Text clarity and readability'
   }
 ];

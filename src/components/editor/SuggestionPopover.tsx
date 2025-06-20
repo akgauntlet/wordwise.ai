@@ -13,9 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Check, 
   X, 
-  AlertCircle, 
-  Lightbulb, 
-  BookOpen
+  BookOpen, 
+  Pen, 
+  BarChart3
 } from 'lucide-react';
 import { getSuggestionCategoryDisplay } from '@/lib/utils';
 import type { WritingSuggestion } from './SuggestionExtension';
@@ -46,18 +46,19 @@ interface SuggestionPopoverProps {
 function getSuggestionIcon(type: WritingSuggestion['type']) {
   switch (type) {
     case 'grammar':
-      return AlertCircle;
-    case 'style':
-      return Lightbulb;
-    case 'readability':
       return BookOpen;
+    case 'style':
+      return Pen;
+    case 'readability':
+      return BarChart3;
     default:
-      return AlertCircle;
+      return BookOpen;
   }
 }
 
 /**
  * Get color scheme for suggestion type
+ * Colors match the editor suggestion styling: red for grammar, blue for style
  */
 function getSuggestionColors(type: WritingSuggestion['type']) {
   switch (type) {
@@ -70,10 +71,10 @@ function getSuggestionColors(type: WritingSuggestion['type']) {
       };
     case 'style':
       return {
-        badge: 'bg-amber-100 text-amber-800 border-amber-200',
-        border: 'border-amber-200',
-        icon: 'text-amber-600',
-        button: 'bg-amber-600 hover:bg-amber-700'
+        badge: 'bg-blue-100 text-blue-800 border-blue-200',
+        border: 'border-blue-200',
+        icon: 'text-blue-600',
+        button: 'bg-blue-600 hover:bg-blue-700'
       };
     case 'readability':
       return {
@@ -206,7 +207,7 @@ export function SuggestionPopover({
             </div>
             <div>
               <p className="text-xs font-medium text-neutral-500 mb-1">Suggested:</p>
-              <p className="text-sm bg-success-50 rounded px-2 py-1 border border-success-200">
+              <p className="text-sm bg-green-50 rounded px-2 py-1 border border-green-200">
                 "{suggestion.suggestedText}"
               </p>
             </div>

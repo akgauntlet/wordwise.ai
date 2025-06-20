@@ -108,9 +108,9 @@ export function SuggestionDemo() {
             <div className="pt-4 border-t">
               <h3 className="font-medium mb-2">Mock Content with Suggestions:</h3>
               <div className="bg-muted p-4 rounded text-sm">
-                The quick <span className="border-b-2 border-wavy border-error-600 bg-error-50/30 cursor-pointer">students goes</span> to 
-                <span className="border-b-2 border-wavy border-warning-600 bg-warning-50/30 cursor-pointer ml-1">I think that maybe</span> the 
-                <span className="border-b-2 border-wavy border-success-600 bg-success-50/30 cursor-pointer ml-1">multifaceted interdisciplinary approach</span> is best.
+                The quick <span className="suggestion-grammar cursor-pointer">students goes</span> to 
+                <span className="suggestion-style cursor-pointer ml-1">I think that maybe</span> the 
+                <span className="suggestion-readability cursor-pointer ml-1">multifaceted interdisciplinary approach</span> is best.
               </div>
               <Button onClick={handleShowPopover} className="mt-2" size="sm">
                 Show Sample Popover
