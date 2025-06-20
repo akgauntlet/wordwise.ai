@@ -231,7 +231,7 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
     } finally {
       setIsExporting(false);
     }
-  }, [editor, title]);
+  }, [editor, title, documentId]);
 
   /**
    * Memoized editor content container classes

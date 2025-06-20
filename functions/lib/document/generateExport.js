@@ -196,7 +196,7 @@ async function generatePdf(title, content, options) {
     const pageHeight = 11;
     const contentWidth = pageWidth - marginLeft - marginRight;
     let currentY = marginTop;
-    let currentX = marginLeft;
+    const currentX = marginLeft;
     // Set initial font
     pdf.setFont(options.fontFamily.toLowerCase().replace(' ', ''), 'normal');
     // Add title

@@ -174,11 +174,11 @@ async function generateDocx(
         children.push(new Paragraph({
           children: currentParagraph,
           heading: isHeading ? (headingLevel === 1 ? HeadingLevel.HEADING_1 : 
-                                headingLevel === 2 ? HeadingLevel.HEADING_2 :
-                                headingLevel === 3 ? HeadingLevel.HEADING_3 :
-                                headingLevel === 4 ? HeadingLevel.HEADING_4 :
-                                headingLevel === 5 ? HeadingLevel.HEADING_5 :
-                                HeadingLevel.HEADING_6) : undefined,
+            headingLevel === 2 ? HeadingLevel.HEADING_2 :
+              headingLevel === 3 ? HeadingLevel.HEADING_3 :
+                headingLevel === 4 ? HeadingLevel.HEADING_4 :
+                  headingLevel === 5 ? HeadingLevel.HEADING_5 :
+                    HeadingLevel.HEADING_6) : undefined,
           spacing: { 
             line: Math.round(options.lineSpacing * 240),
             after: 120 
@@ -208,11 +208,11 @@ async function generateDocx(
     children.push(new Paragraph({
       children: currentParagraph,
       heading: isHeading ? (headingLevel === 1 ? HeadingLevel.HEADING_1 : 
-                            headingLevel === 2 ? HeadingLevel.HEADING_2 :
-                            headingLevel === 3 ? HeadingLevel.HEADING_3 :
-                            headingLevel === 4 ? HeadingLevel.HEADING_4 :
-                            headingLevel === 5 ? HeadingLevel.HEADING_5 :
-                            HeadingLevel.HEADING_6) : undefined,
+        headingLevel === 2 ? HeadingLevel.HEADING_2 :
+          headingLevel === 3 ? HeadingLevel.HEADING_3 :
+            headingLevel === 4 ? HeadingLevel.HEADING_4 :
+              headingLevel === 5 ? HeadingLevel.HEADING_5 :
+                HeadingLevel.HEADING_6) : undefined,
       spacing: { 
         line: Math.round(options.lineSpacing * 240)
       }
@@ -265,7 +265,7 @@ async function generatePdf(
   const contentWidth = pageWidth - marginLeft - marginRight;
 
   let currentY = marginTop;
-  let currentX = marginLeft;
+  const currentX = marginLeft;
 
   // Set initial font
   pdf.setFont(options.fontFamily.toLowerCase().replace(' ', ''), 'normal');
@@ -430,7 +430,7 @@ export const generateExportHttp = onRequest(
   async (req, res) => {
     // Handle CORS
     await new Promise<void>((resolve, reject) => {
-      corsHandler(req, res, (error: any) => {
+      corsHandler(req, res, (error: unknown) => {
         if (error) reject(error);
         else resolve();
       });
@@ -541,7 +541,7 @@ export const downloadExport = onRequest(
   async (req, res) => {
     // Handle CORS
     await new Promise<void>((resolve, reject) => {
-      corsHandler(req, res, (error: any) => {
+      corsHandler(req, res, (error: unknown) => {
         if (error) reject(error);
         else resolve();
       });
