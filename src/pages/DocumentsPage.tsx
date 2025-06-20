@@ -46,14 +46,21 @@ function DocumentsPageContent() {
    * Filter documents based on search query (title only)
    */
   const filteredDocuments = useMemo(() => {
+    const sortDocuments = (docs: typeof documents) => {
+      return docs.sort((a, b) => {
+        const aTime = a.updatedAt?.toMillis() || 0;
+        const bTime = b.updatedAt?.toMillis() || 0;
+        return bTime - aTime;
+      });
+    };
+
     if (!searchQuery.trim()) {
-      return documents.sort((a, b) => b.updatedAt.toMillis() - a.updatedAt.toMillis());
+      return sortDocuments(documents);
     }
     
     const query = searchQuery.toLowerCase();
-    return documents
-      .filter(doc => doc.title.toLowerCase().includes(query))
-      .sort((a, b) => b.updatedAt.toMillis() - a.updatedAt.toMillis());
+    const filtered = documents.filter(doc => doc.title.toLowerCase().includes(query));
+    return sortDocuments(filtered);
   }, [documents, searchQuery]);
 
   /**
@@ -119,13 +126,13 @@ function DocumentsPageContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">My Documents</h1>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl font-semibold">My Documents</h2>
+          <p className="text-muted-foreground mt-2">
             {documents.length === 0 
               ? "No documents yet" 
-              : `${documents.length} document${documents.length === 1 ? '' : 's'} total`
+              : `${documents.length} document${documents.length === 1 ? '' : 's total'}`
             }
           </p>
         </div>
@@ -210,7 +217,7 @@ function DocumentsPageContent() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDocuments.map((document) => (
             <DocumentCard
               key={document.id}

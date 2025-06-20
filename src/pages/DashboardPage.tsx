@@ -46,7 +46,7 @@ function DashboardPageContent() {
         <main>
           {/* Quick Actions */}
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Quick Actions</h2>
+            <h2 className="text-2xl font-semibold mb-6">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="cursor-pointer hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out" onClick={handleCreateDocument}>
                 <CardHeader className="pb-3">

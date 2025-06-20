@@ -100,8 +100,8 @@ export function DocumentCard({
   };
 
   return (
-    <Card className="hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out cursor-pointer group">
-      <CardHeader onClick={handleOpenDocument} className="pb-3">
+    <Card className="hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out cursor-pointer group h-64 flex flex-col">
+      <CardHeader onClick={handleOpenDocument} className="pb-3 flex-shrink-0">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <CardTitle className="text-lg font-semibold truncate">
@@ -147,48 +147,51 @@ export function DocumentCard({
         </div>
       </CardHeader>
       
-      <CardContent onClick={handleOpenDocument}>
+      <CardContent onClick={handleOpenDocument} className="flex flex-col flex-1 pt-0">
         {/* Document preview */}
-        <div className="mb-4">
+        <div className="flex-1 mb-4">
           <p className="text-sm text-muted-foreground line-clamp-3">
             {document.plainText || "No content yet..."}
           </p>
         </div>
         
-        {/* Document stats */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <Hash className="h-3 w-3" />
-              <span>{document.wordCount} words</span>
+        {/* Bottom section with stats and tags */}
+        <div className="flex-shrink-0 space-y-3">
+          {/* Tags */}
+          {document.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {document.tags.slice(0, 3).map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+              {document.tags.length > 3 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{document.tags.length - 3} more
+                </Badge>
+              )}
             </div>
-            <div className="flex items-center gap-1">
-              <FileText className="h-3 w-3" />
-              <span>{document.characterCount} characters</span>
-            </div>
-          </div>
+          )}
           
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>Updated {formatDate(document.updatedAt)}</span>
+          {/* Document stats */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <Hash className="h-3 w-3" />
+                <span>{document.wordCount} words</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <FileText className="h-3 w-3" />
+                <span>{document.characterCount} characters</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>Updated {formatDate(document.updatedAt)}</span>
+            </div>
           </div>
         </div>
-        
-        {/* Tags */}
-        {document.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-3">
-            {document.tags.slice(0, 3).map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {document.tags.length > 3 && (
-              <Badge variant="secondary" className="text-xs">
-                +{document.tags.length - 3} more
-              </Badge>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

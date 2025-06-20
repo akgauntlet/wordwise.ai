@@ -42,7 +42,11 @@ export function DocumentList() {
    * Get the 3 most recently updated documents
    */
   const recentDocuments = documents
-    .sort((a, b) => b.updatedAt.toMillis() - a.updatedAt.toMillis())
+    .sort((a, b) => {
+      const aTime = a.updatedAt?.toMillis() || 0;
+      const bTime = b.updatedAt?.toMillis() || 0;
+      return bTime - aTime;
+    })
     .slice(0, 3);
 
   /**
@@ -103,9 +107,6 @@ export function DocumentList() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Recent documents</h2>
-          <p className="text-muted-foreground">
-            Showing your {recentDocuments.length} most recently updated documents
-          </p>
         </div>
         
         <Button 
@@ -157,7 +158,7 @@ export function DocumentList() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recentDocuments.map((document) => (
             <DocumentCard
               key={document.id}
