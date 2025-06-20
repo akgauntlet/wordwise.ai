@@ -10,9 +10,11 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/auth/useAuthContext';
+import { useActiveDocument } from '@/hooks/document';
 import { 
   Home, 
   FileText, 
+  Edit3,
   User, 
   LogOut
 } from 'lucide-react';
@@ -39,6 +41,8 @@ interface NavigationItem {
   icon: typeof Home;
   /** Whether this item matches current route */
   isActive?: boolean;
+  /** Whether this item is disabled */
+  disabled?: boolean;
 }
 
 /**
@@ -52,6 +56,7 @@ interface NavigationItem {
  */
 export function NavigationSidebar({ isCollapsed = false, className = '' }: NavigationSidebarProps) {
   const { user, profile, signOut } = useAuth();
+  const { activeDocumentId, hasActiveDocument } = useActiveDocument();
   const location = useLocation();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -82,6 +87,15 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
   };
 
   /**
+   * Handle editor navigation - navigate to active document or do nothing if disabled
+   */
+  const handleEditorNavigate = () => {
+    if (hasActiveDocument && activeDocumentId) {
+      navigate(`/editor/${activeDocumentId}`);
+    }
+  };
+
+  /**
    * Navigation items configuration
    */
   const navigationItems: NavigationItem[] = [
@@ -95,7 +109,14 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
       label: 'Documents',
       path: '/documents',
       icon: FileText,
-      isActive: location.pathname === '/documents' || location.pathname.startsWith('/editor')
+      isActive: location.pathname === '/documents'
+    },
+    {
+      label: 'Editor',
+      path: activeDocumentId ? `/editor/${activeDocumentId}` : '/editor',
+      icon: Edit3,
+      isActive: location.pathname.startsWith('/editor'),
+      disabled: !hasActiveDocument
     }
   ];
 
@@ -135,17 +156,27 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
         <div className="space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;
+            const isEditor = item.label === 'Editor';
+            
             return (
               <Button
                 key={item.path}
                 variant={item.isActive ? 'secondary' : 'ghost'}
                 size="sm"
-                onClick={() => handleNavigate(item.path)}
+                onClick={isEditor ? handleEditorNavigate : () => handleNavigate(item.path)}
+                disabled={item.disabled}
                 className={`
                   w-full justify-start gap-3 h-12 px-3
                   ${item.isActive ? 'bg-secondary text-secondary-foreground' : ''}
+                  ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
-                title={!shouldShowContent ? item.label : undefined}
+                title={
+                  !shouldShowContent 
+                    ? item.label 
+                    : item.disabled 
+                      ? 'No active document - create or open a document first'
+                      : undefined
+                }
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
                 {shouldShowContent && (

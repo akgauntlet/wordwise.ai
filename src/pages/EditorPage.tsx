@@ -14,6 +14,7 @@ import { EnhancedDocumentEditor } from '@/components/editor';
 import { useAuth } from '@/hooks/auth/useAuthContext';
 import { useDocument } from '@/hooks/document';
 import { PageErrorBoundary } from '@/components/layout';
+import { setActiveDocument } from '@/lib/utils';
 import type { TiptapContent } from '@/types/document';
 
 
@@ -30,6 +31,15 @@ function EditorPageContent() {
   
 
   const [currentTitle, setCurrentTitle] = useState('');
+
+  /**
+   * Set active document in session storage when documentId is available
+   */
+  useEffect(() => {
+    if (documentId) {
+      setActiveDocument(documentId);
+    }
+  }, [documentId]);
 
   /**
    * Update title when document loads

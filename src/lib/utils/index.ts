@@ -6,6 +6,7 @@
  */
 
 export * from './cn';
+export * from './sessionStorage';
 
 // Additional utilities will be exported here as they are created 
 

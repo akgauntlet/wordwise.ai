@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DocumentCard } from "@/components/dashboard/DocumentCard";
 import { useDocuments } from "@/hooks/document/useDocuments";
 import { PageErrorBoundary } from "@/components/layout";
+import { setActiveDocument } from "@/lib/utils";
 import { 
   Plus, 
   FileText, 
@@ -69,6 +70,8 @@ function DocumentsPageContent() {
   const handleCreateDocument = async () => {
     const documentId = await createNewDocument();
     if (documentId) {
+      // Set as active document in session storage
+      setActiveDocument(documentId);
       navigate(`/editor/${documentId}`);
     }
   };

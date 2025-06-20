@@ -17,6 +17,8 @@ import {
   Clock,
   History
 } from "lucide-react";
+import { setActiveDocument } from "@/lib/utils";
+import { useActiveDocument } from "@/hooks/document";
 import type { Document } from "@/types/document";
 
 /**
@@ -41,11 +43,14 @@ export function DocumentCard({
   showVersionsButton = false
 }: DocumentCardProps) {
   const navigate = useNavigate();
+  const { isActiveDocument } = useActiveDocument();
 
   /**
    * Handle opening the document in editor
    */
   const handleOpenDocument = () => {
+    // Set as active document in session storage
+    setActiveDocument(document.id);
     navigate(`/editor/${document.id}`);
   };
 
@@ -99,8 +104,11 @@ export function DocumentCard({
     return typeMap[type] || type;
   };
 
+  // Check if this document is currently active
+  const isCurrentlyActive = isActiveDocument(document.id);
+
   return (
-    <Card className="hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out cursor-pointer group h-64 flex flex-col">
+    <Card className={`hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out cursor-pointer group h-64 flex flex-col ${isCurrentlyActive ? 'ring-2 ring-primary' : ''}`}>
       <CardHeader onClick={handleOpenDocument} className="pb-3 flex-shrink-0">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
@@ -114,6 +122,9 @@ export function DocumentCard({
               <span className="text-xs text-muted-foreground">
                 {document.language.toUpperCase()}
               </span>
+              {isCurrentlyActive && (
+                <span className="text-xs text-primary font-medium">Active</span>
+              )}
             </CardDescription>
           </div>
           
