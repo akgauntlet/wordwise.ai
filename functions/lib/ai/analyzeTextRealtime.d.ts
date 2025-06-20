@@ -58,15 +58,15 @@ interface RealtimeAnalysisResult {
  * });
  * ```
  */
-export declare const analyzeTextRealtime: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+export declare const analyzeTextRealtime: import("firebase-functions/v2/https").CallableFunction<import("../types/ai").AnalyzeTextRealtimeRequest, Promise<{
     success: boolean;
     data: RealtimeAnalysisResult;
-    requestId: any;
+    requestId: string;
     error?: undefined;
 } | {
     success: boolean;
     error: AIAnalysisError;
-    requestId: any;
+    requestId: string;
     data?: undefined;
 }>>;
 export {};

@@ -43,7 +43,7 @@ import { AIAnalysisResult, AIAnalysisError } from '../types/ai';
  * });
  * ```
  */
-export declare const analyzeText: import("firebase-functions/v2/https").CallableFunction<any, Promise<{
+export declare const analyzeText: import("firebase-functions/v2/https").CallableFunction<import("../types/ai").AnalyzeTextRequest, Promise<{
     success: boolean;
     data: AIAnalysisResult;
     requestId: string;

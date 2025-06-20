@@ -22,7 +22,8 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 import { 
   AIAnalysisResult,
-  AIAnalysisError 
+  AIAnalysisError,
+  AnalyzeTextCallableRequest
 } from '../types/ai';
 import { 
   initializeOpenAI,
@@ -69,7 +70,7 @@ export const analyzeText = onCall(
     region: 'us-central1',
     secrets: ['OPENAI_API_KEY']
   },
-  async (request: any) => {
+  async (request: AnalyzeTextCallableRequest) => {
     const startTime = Date.now();
     const requestId = generateRequestId();
     
@@ -78,7 +79,7 @@ export const analyzeText = onCall(
     // Initialize variables for error handling scope
     let userId: string;
     let content: string;
-    let options: any;
+    let options: import('../types/ai').AnalysisOptions;
     let documentId: string | undefined;
     
     try {

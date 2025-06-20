@@ -16,6 +16,7 @@
  */
 
 import OpenAI from 'openai';
+import { createHash } from 'crypto';
 import { 
   AnalysisOptions, 
   GrammarSuggestion, 
@@ -118,7 +119,7 @@ export function parseOpenAIResponse(
     
     // Use enhanced parsing with recovery mechanisms
     const parsedResult = options 
-      ? parseResponseWithRecovery(response, options)
+      ? parseResponseWithRecovery(response)
       : parseAndValidateResponse(response);
     
     console.log(`[OpenAI] Parse successful with ${parsedResult.parseMetadata.warnings.length} warnings`);
@@ -153,27 +154,29 @@ export function parseOpenAIResponse(
  * @param error - Error from OpenAI API call
  * @returns Structured error information
  */
-export function handleOpenAIError(error: any): AIAnalysisError {
+export function handleOpenAIError(error: unknown): AIAnalysisError {
+  const errorObj = error as Record<string, unknown>;
+  
   console.error('OpenAI API Error Details:', {
-    name: error.name,
-    message: error.message,
-    status: error.status,
-    code: error.code,
-    type: error.type,
-    cause: error.cause
+    name: errorObj?.name,
+    message: errorObj?.message,
+    status: errorObj?.status,
+    code: errorObj?.code,
+    type: errorObj?.type,
+    cause: errorObj?.cause
   });
 
   // Connection/Network errors
-  if (error.name === 'APIConnectionError' || error.code === 'ECONNRESET' || error.code === 'ENOTFOUND') {
+  if (errorObj?.name === 'APIConnectionError' || errorObj?.code === 'ECONNRESET' || errorObj?.code === 'ENOTFOUND') {
     return {
       code: 'CONNECTION_ERROR',
       message: 'Network connection to AI service failed. Please try again.',
-      details: `Connection error: ${error.message}`
+      details: `Connection error: ${typeof errorObj?.message === 'string' ? errorObj.message : 'Unknown connection error'}`
     };
   }
 
   // Rate limiting error
-  if (error.status === 429) {
+  if (errorObj?.status === 429) {
     return {
       code: 'RATE_LIMIT_EXCEEDED',
       message: 'Analysis temporarily unavailable due to high demand. Please try again in a moment.',
@@ -182,38 +185,38 @@ export function handleOpenAIError(error: any): AIAnalysisError {
   }
 
   // Invalid API key or authentication
-  if (error.status === 401 || error.status === 403) {
+  if (errorObj?.status === 401 || errorObj?.status === 403) {
     return {
       code: 'API_ERROR',
       message: 'Authentication failed. Please check API configuration.',
-      details: `Auth error (${error.status}): ${error.message}`
+      details: `Auth error (${errorObj.status}): ${typeof errorObj?.message === 'string' ? errorObj.message : 'Authentication failed'}`
     };
   }
 
   // Content too long or invalid
-  if (error.status === 400) {
+  if (errorObj?.status === 400) {
     return {
       code: 'INVALID_CONTENT',
       message: 'The text content is too long or contains invalid characters. Please check your text and try again.',
-      details: error.message || 'Bad request'
+      details: (typeof errorObj?.message === 'string' ? errorObj.message : 'Bad request')
     };
   }
 
   // Network or server errors
-  if (error.status >= 500) {
+  if (typeof errorObj?.status === 'number' && errorObj.status >= 500) {
     return {
       code: 'API_ERROR',
       message: 'AI service is temporarily unavailable. Please try again later.',
-      details: `Server error: ${error.status}`
+      details: `Server error: ${errorObj.status}`
     };
   }
 
   // Timeout errors
-  if (error.name === 'TimeoutError' || error.code === 'ETIMEDOUT') {
+  if (errorObj?.name === 'TimeoutError' || errorObj?.code === 'ETIMEDOUT') {
     return {
       code: 'TIMEOUT_ERROR',
       message: 'Analysis request timed out. Please try again.',
-      details: `Timeout: ${error.message}`
+      details: `Timeout: ${typeof errorObj?.message === 'string' ? errorObj.message : 'Request timeout'}`
     };
   }
 
@@ -221,7 +224,7 @@ export function handleOpenAIError(error: any): AIAnalysisError {
   return {
     code: 'UNKNOWN_ERROR',
     message: 'An unexpected error occurred during analysis. Please try again.',
-    details: error.message || 'Unknown error'
+    details: (typeof errorObj?.message === 'string' ? errorObj.message : 'Unknown error')
   };
 }
 
@@ -233,9 +236,8 @@ export function handleOpenAIError(error: any): AIAnalysisError {
  * @returns Hash string for caching
  */
 export function calculateContentHash(content: string, options: AnalysisOptions): string {
-  const crypto = require('crypto');
   const hashInput = JSON.stringify({ content, options });
-  return crypto.createHash('sha256').update(hashInput).digest('hex');
+  return createHash('sha256').update(hashInput).digest('hex');
 }
 
 /**

@@ -8,7 +8,7 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { useAuth } from "@/hooks/auth/useAuthContext";
+import { useAuth } from "@/hooks/auth/useAuth";
 import { SignInForm } from "./SignInForm";
 import { SimpleSignUpForm } from "./SimpleSignUpForm";
 import { Loader2 } from "lucide-react";

@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/auth/useAuthContext';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useActiveDocument } from '@/hooks/document';
 import { 
   Home, 

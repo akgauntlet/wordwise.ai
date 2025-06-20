@@ -27,6 +27,7 @@ exports.handleOpenAIError = handleOpenAIError;
 exports.calculateContentHash = calculateContentHash;
 exports.validateAnalysisRequest = validateAnalysisRequest;
 const openai_1 = __importDefault(require("openai"));
+const crypto_1 = require("crypto");
 const promptTemplates_1 = require("./promptTemplates");
 const responseValidation_1 = require("./responseValidation");
 /**
@@ -91,7 +92,7 @@ function parseOpenAIResponse(response, options) {
         console.log('[OpenAI] Starting enhanced response parsing');
         // Use enhanced parsing with recovery mechanisms
         const parsedResult = options
-            ? (0, responseValidation_1.parseResponseWithRecovery)(response, options)
+            ? (0, responseValidation_1.parseResponseWithRecovery)(response)
             : (0, responseValidation_1.parseAndValidateResponse)(response);
         console.log(`[OpenAI] Parse successful with ${parsedResult.parseMetadata.warnings.length} warnings`);
         if (parsedResult.parseMetadata.warnings.length > 0) {
@@ -122,24 +123,25 @@ function parseOpenAIResponse(response, options) {
  * @returns Structured error information
  */
 function handleOpenAIError(error) {
+    const errorObj = error;
     console.error('OpenAI API Error Details:', {
-        name: error.name,
-        message: error.message,
-        status: error.status,
-        code: error.code,
-        type: error.type,
-        cause: error.cause
+        name: errorObj === null || errorObj === void 0 ? void 0 : errorObj.name,
+        message: errorObj === null || errorObj === void 0 ? void 0 : errorObj.message,
+        status: errorObj === null || errorObj === void 0 ? void 0 : errorObj.status,
+        code: errorObj === null || errorObj === void 0 ? void 0 : errorObj.code,
+        type: errorObj === null || errorObj === void 0 ? void 0 : errorObj.type,
+        cause: errorObj === null || errorObj === void 0 ? void 0 : errorObj.cause
     });
     // Connection/Network errors
-    if (error.name === 'APIConnectionError' || error.code === 'ECONNRESET' || error.code === 'ENOTFOUND') {
+    if ((errorObj === null || errorObj === void 0 ? void 0 : errorObj.name) === 'APIConnectionError' || (errorObj === null || errorObj === void 0 ? void 0 : errorObj.code) === 'ECONNRESET' || (errorObj === null || errorObj === void 0 ? void 0 : errorObj.code) === 'ENOTFOUND') {
         return {
             code: 'CONNECTION_ERROR',
             message: 'Network connection to AI service failed. Please try again.',
-            details: `Connection error: ${error.message}`
+            details: `Connection error: ${typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.message) === 'string' ? errorObj.message : 'Unknown connection error'}`
         };
     }
     // Rate limiting error
-    if (error.status === 429) {
+    if ((errorObj === null || errorObj === void 0 ? void 0 : errorObj.status) === 429) {
         return {
             code: 'RATE_LIMIT_EXCEEDED',
             message: 'Analysis temporarily unavailable due to high demand. Please try again in a moment.',
@@ -147,42 +149,42 @@ function handleOpenAIError(error) {
         };
     }
     // Invalid API key or authentication
-    if (error.status === 401 || error.status === 403) {
+    if ((errorObj === null || errorObj === void 0 ? void 0 : errorObj.status) === 401 || (errorObj === null || errorObj === void 0 ? void 0 : errorObj.status) === 403) {
         return {
             code: 'API_ERROR',
             message: 'Authentication failed. Please check API configuration.',
-            details: `Auth error (${error.status}): ${error.message}`
+            details: `Auth error (${errorObj.status}): ${typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.message) === 'string' ? errorObj.message : 'Authentication failed'}`
         };
     }
     // Content too long or invalid
-    if (error.status === 400) {
+    if ((errorObj === null || errorObj === void 0 ? void 0 : errorObj.status) === 400) {
         return {
             code: 'INVALID_CONTENT',
             message: 'The text content is too long or contains invalid characters. Please check your text and try again.',
-            details: error.message || 'Bad request'
+            details: (typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.message) === 'string' ? errorObj.message : 'Bad request')
         };
     }
     // Network or server errors
-    if (error.status >= 500) {
+    if (typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.status) === 'number' && errorObj.status >= 500) {
         return {
             code: 'API_ERROR',
             message: 'AI service is temporarily unavailable. Please try again later.',
-            details: `Server error: ${error.status}`
+            details: `Server error: ${errorObj.status}`
         };
     }
     // Timeout errors
-    if (error.name === 'TimeoutError' || error.code === 'ETIMEDOUT') {
+    if ((errorObj === null || errorObj === void 0 ? void 0 : errorObj.name) === 'TimeoutError' || (errorObj === null || errorObj === void 0 ? void 0 : errorObj.code) === 'ETIMEDOUT') {
         return {
             code: 'TIMEOUT_ERROR',
             message: 'Analysis request timed out. Please try again.',
-            details: `Timeout: ${error.message}`
+            details: `Timeout: ${typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.message) === 'string' ? errorObj.message : 'Request timeout'}`
         };
     }
     // Unknown error
     return {
         code: 'UNKNOWN_ERROR',
         message: 'An unexpected error occurred during analysis. Please try again.',
-        details: error.message || 'Unknown error'
+        details: (typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.message) === 'string' ? errorObj.message : 'Unknown error')
     };
 }
 /**
@@ -193,9 +195,8 @@ function handleOpenAIError(error) {
  * @returns Hash string for caching
  */
 function calculateContentHash(content, options) {
-    const crypto = require('crypto');
     const hashInput = JSON.stringify({ content, options });
-    return crypto.createHash('sha256').update(hashInput).digest('hex');
+    return (0, crypto_1.createHash)('sha256').update(hashInput).digest('hex');
 }
 /**
  * Validate analysis request content and options

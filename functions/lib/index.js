@@ -16,7 +16,7 @@
  * - Handles global initialization and configuration
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.analyzeTextRealtime = exports.analyzeText = void 0;
+exports.parseDocument = exports.analyzeTextRealtime = exports.analyzeText = void 0;
 const app_1 = require("firebase-admin/app");
 // Initialize Firebase Admin SDK
 (0, app_1.initializeApp)();
@@ -25,9 +25,9 @@ var analyzeText_1 = require("./ai/analyzeText");
 Object.defineProperty(exports, "analyzeText", { enumerable: true, get: function () { return analyzeText_1.analyzeText; } });
 var analyzeTextRealtime_1 = require("./ai/analyzeTextRealtime");
 Object.defineProperty(exports, "analyzeTextRealtime", { enumerable: true, get: function () { return analyzeTextRealtime_1.analyzeTextRealtime; } });
+var parseDocument_1 = require("./document/parseDocument");
+Object.defineProperty(exports, "parseDocument", { enumerable: true, get: function () { return parseDocument_1.parseDocument; } });
 // Future functions will be exported here as they are implemented:
-// export { parseDocument } from './document/parseDocument';
-// export { generateExport } from './document/generateExport';
 // export { manageVersions } from './document/manageVersions';
 // export { cleanupCache } from './maintenance/cleanupCache';
 // export { rateLimitCleanup } from './maintenance/rateLimitCleanup'; 

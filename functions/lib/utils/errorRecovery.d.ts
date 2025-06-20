@@ -14,7 +14,7 @@
  * - Track error patterns for prompt optimization
  * - Provide fallback responses for critical failures
  */
-import { AIAnalysisError, AnalysisOptions } from '../types/ai';
+import { AIAnalysisError, AnalysisOptions, GrammarSuggestion, StyleSuggestion, ReadabilitySuggestion, ReadabilityMetrics } from '../types/ai';
 /**
  * Error severity levels for monitoring and alerting
  */
@@ -52,7 +52,7 @@ interface RetryConfig {
  * @param context - Request context for error analysis
  * @returns Processed error with recovery suggestions
  */
-export declare function handleErrorWithRecovery(error: any, context: {
+export declare function handleErrorWithRecovery(error: unknown, context: {
     userId: string;
     requestId: string;
     analysisOptions: AnalysisOptions;
@@ -62,7 +62,19 @@ export declare function handleErrorWithRecovery(error: any, context: {
     processedError: AIAnalysisError;
     shouldRetry: boolean;
     retryDelay: number;
-    fallbackData?: any;
+    fallbackData?: {
+        grammarSuggestions: GrammarSuggestion[];
+        styleSuggestions: StyleSuggestion[];
+        readabilitySuggestions: ReadabilitySuggestion[];
+        readabilityMetrics: ReadabilityMetrics;
+        parseMetadata?: {
+            originalLength: number;
+            cleanedLength: number;
+            parseAttempts: number;
+            warnings: string[];
+            fallbacksUsed: string[];
+        };
+    };
 }>;
 /**
  * Retry wrapper for async operations with exponential backoff

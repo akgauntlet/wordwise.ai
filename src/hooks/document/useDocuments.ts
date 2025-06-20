@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@/hooks/auth/useAuthContext";
+import { useAuth } from "@/hooks/auth/useAuth";
 import {
   createDocument,
   updateDocument,

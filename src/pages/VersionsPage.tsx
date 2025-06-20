@@ -72,18 +72,18 @@ function VersionCard({ version, onSaveAsNew, isLoading = false }: VersionCardPro
                 Version {version.version}
               </CardTitle>
               <CardDescription className="flex items-center gap-4 mt-1">
-                <div className="flex items-center gap-1">
+                <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   <span className="text-xs">
                     {formatDate(version.createdAt)}
                   </span>
-                </div>
-                <div className="flex items-center gap-1">
+                </span>
+                <span className="flex items-center gap-1">
                   <Hash className="h-3 w-3" />
                   <span className="text-xs">
                     {version.wordCount} words
                   </span>
-                </div>
+                </span>
               </CardDescription>
             </div>
           </div>

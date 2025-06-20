@@ -114,7 +114,7 @@ function attemptFallbackParsing(response, metadata) {
         // Attempt 2: Parse partial JSON objects
         () => parsePartialJson(response),
         // Attempt 3: Extract text-based suggestions
-        () => extractTextBasedSuggestions(response)
+        () => extractTextBasedSuggestions()
     ];
     for (let i = 0; i < fallbackAttempts.length; i++) {
         try {
@@ -149,8 +149,8 @@ function extractSuggestionArrays(response) {
         try {
             result.grammarSuggestions = JSON.parse(grammarMatch[1]);
         }
-        catch (error) {
-            console.warn('[ResponseParser] Failed to parse grammar suggestions array');
+        catch (parseError) {
+            console.warn('[ResponseParser] Failed to parse grammar suggestions array:', parseError);
         }
     }
     // Extract style suggestions
@@ -159,8 +159,8 @@ function extractSuggestionArrays(response) {
         try {
             result.styleSuggestions = JSON.parse(styleMatch[1]);
         }
-        catch (error) {
-            console.warn('[ResponseParser] Failed to parse style suggestions array');
+        catch (parseError) {
+            console.warn('[ResponseParser] Failed to parse style suggestions array:', parseError);
         }
     }
     // Extract readability suggestions
@@ -169,8 +169,8 @@ function extractSuggestionArrays(response) {
         try {
             result.readabilitySuggestions = JSON.parse(readabilityMatch[1]);
         }
-        catch (error) {
-            console.warn('[ResponseParser] Failed to parse readability suggestions array');
+        catch (parseError) {
+            console.warn('[ResponseParser] Failed to parse readability suggestions array:', parseError);
         }
     }
     return result;
@@ -209,7 +209,7 @@ function parsePartialJson(response) {
  * @param response - Response text
  * @returns Basic data structure with extracted suggestions
  */
-function extractTextBasedSuggestions(response) {
+function extractTextBasedSuggestions() {
     // This is a last resort - extract any structured information
     const result = {
         grammarSuggestions: [],
@@ -278,33 +278,34 @@ function validateAndExtractSuggestions(data, config, metadata) {
  */
 function validateGrammarSuggestion(suggestion, config, metadata) {
     try {
+        const suggestionObj = suggestion;
         // Required fields validation
-        if (!suggestion.id || !suggestion.originalText || !suggestion.suggestedText) {
+        if (!suggestionObj.id || !suggestionObj.originalText || !suggestionObj.suggestedText) {
             metadata.warnings.push('Grammar suggestion missing required fields');
             return null;
         }
         // Confidence threshold check
-        const confidence = typeof suggestion.confidence === 'number' ? suggestion.confidence : 0.5;
+        const confidence = typeof suggestionObj.confidence === 'number' ? suggestionObj.confidence : 0.5;
         if (confidence < config.minConfidenceThreshold) {
             metadata.warnings.push(`Grammar suggestion confidence too low: ${confidence}`);
             return null;
         }
         // Text position validation
-        const startOffset = Math.max(0, parseInt(suggestion.startOffset) || 0);
-        const endOffset = Math.max(startOffset, parseInt(suggestion.endOffset) || startOffset);
+        const startOffset = Math.max(0, parseInt(String(suggestionObj.startOffset)) || 0);
+        const endOffset = Math.max(startOffset, parseInt(String(suggestionObj.endOffset)) || startOffset);
         return {
-            id: String(suggestion.id),
+            id: String(suggestionObj.id),
             type: 'grammar',
-            severity: validateSeverity(suggestion.severity),
+            severity: validateSeverity(suggestionObj.severity),
             startOffset,
             endOffset,
-            originalText: String(suggestion.originalText),
-            suggestedText: String(suggestion.suggestedText),
-            explanation: String(suggestion.explanation || 'Grammar correction suggested'),
-            category: String(suggestion.category || 'general'),
+            originalText: String(suggestionObj.originalText),
+            suggestedText: String(suggestionObj.suggestedText),
+            explanation: String(suggestionObj.explanation || 'Grammar correction suggested'),
+            category: String(suggestionObj.category || 'general'),
             confidence,
-            grammarRule: String(suggestion.grammarRule || 'General Grammar'),
-            eslExplanation: String(suggestion.eslExplanation || '')
+            grammarRule: String(suggestionObj.grammarRule || 'General Grammar'),
+            eslExplanation: String(suggestionObj.eslExplanation || '')
         };
     }
     catch (error) {
@@ -322,33 +323,34 @@ function validateGrammarSuggestion(suggestion, config, metadata) {
  */
 function validateStyleSuggestion(suggestion, config, metadata) {
     try {
+        const suggestionObj = suggestion;
         // Required fields validation
-        if (!suggestion.id || !suggestion.originalText || !suggestion.suggestedText) {
+        if (!suggestionObj.id || !suggestionObj.originalText || !suggestionObj.suggestedText) {
             metadata.warnings.push('Style suggestion missing required fields');
             return null;
         }
         // Confidence threshold check
-        const confidence = typeof suggestion.confidence === 'number' ? suggestion.confidence : 0.5;
+        const confidence = typeof suggestionObj.confidence === 'number' ? suggestionObj.confidence : 0.5;
         if (confidence < config.minConfidenceThreshold) {
             metadata.warnings.push(`Style suggestion confidence too low: ${confidence}`);
             return null;
         }
         // Text position validation
-        const startOffset = Math.max(0, parseInt(suggestion.startOffset) || 0);
-        const endOffset = Math.max(startOffset, parseInt(suggestion.endOffset) || startOffset);
+        const startOffset = Math.max(0, parseInt(String(suggestionObj.startOffset)) || 0);
+        const endOffset = Math.max(startOffset, parseInt(String(suggestionObj.endOffset)) || startOffset);
         return {
-            id: String(suggestion.id),
+            id: String(suggestionObj.id),
             type: 'style',
-            severity: validateSeverity(suggestion.severity),
+            severity: validateSeverity(suggestionObj.severity),
             startOffset,
             endOffset,
-            originalText: String(suggestion.originalText),
-            suggestedText: String(suggestion.suggestedText),
-            explanation: String(suggestion.explanation || 'Style improvement suggested'),
-            category: String(suggestion.category || 'general'),
+            originalText: String(suggestionObj.originalText),
+            suggestedText: String(suggestionObj.suggestedText),
+            explanation: String(suggestionObj.explanation || 'Style improvement suggested'),
+            category: String(suggestionObj.category || 'general'),
             confidence,
-            styleCategory: validateStyleCategory(suggestion.styleCategory),
-            impact: validateImpact(suggestion.impact)
+            styleCategory: validateStyleCategory(suggestionObj.styleCategory),
+            impact: validateImpact(suggestionObj.impact)
         };
     }
     catch (error) {
@@ -366,33 +368,34 @@ function validateStyleSuggestion(suggestion, config, metadata) {
  */
 function validateReadabilitySuggestion(suggestion, config, metadata) {
     try {
+        const suggestionObj = suggestion;
         // Required fields validation
-        if (!suggestion.id || !suggestion.originalText || !suggestion.suggestedText) {
+        if (!suggestionObj.id || !suggestionObj.originalText || !suggestionObj.suggestedText) {
             metadata.warnings.push('Readability suggestion missing required fields');
             return null;
         }
         // Confidence threshold check
-        const confidence = typeof suggestion.confidence === 'number' ? suggestion.confidence : 0.5;
+        const confidence = typeof suggestionObj.confidence === 'number' ? suggestionObj.confidence : 0.5;
         if (confidence < config.minConfidenceThreshold) {
             metadata.warnings.push(`Readability suggestion confidence too low: ${confidence}`);
             return null;
         }
         // Text position validation
-        const startOffset = Math.max(0, parseInt(suggestion.startOffset) || 0);
-        const endOffset = Math.max(startOffset, parseInt(suggestion.endOffset) || startOffset);
+        const startOffset = Math.max(0, parseInt(String(suggestionObj.startOffset)) || 0);
+        const endOffset = Math.max(startOffset, parseInt(String(suggestionObj.endOffset)) || startOffset);
         return {
-            id: String(suggestion.id),
+            id: String(suggestionObj.id),
             type: 'readability',
-            severity: validateSeverity(suggestion.severity),
+            severity: validateSeverity(suggestionObj.severity),
             startOffset,
             endOffset,
-            originalText: String(suggestion.originalText),
-            suggestedText: String(suggestion.suggestedText),
-            explanation: String(suggestion.explanation || 'Readability improvement suggested'),
-            category: String(suggestion.category || 'general'),
+            originalText: String(suggestionObj.originalText),
+            suggestedText: String(suggestionObj.suggestedText),
+            explanation: String(suggestionObj.explanation || 'Readability improvement suggested'),
+            category: String(suggestionObj.category || 'general'),
             confidence,
-            metric: validateReadabilityMetric(suggestion.metric),
-            targetLevel: String(suggestion.targetLevel || 'College level')
+            metric: validateReadabilityMetric(suggestionObj.metric),
+            targetLevel: String(suggestionObj.targetLevel || 'College level')
         };
     }
     catch (error) {
@@ -413,14 +416,15 @@ function validateReadabilityMetrics(metrics, metadata) {
         return getDefaultReadabilityMetrics();
     }
     try {
+        const metricsObj = metrics;
         return {
-            fleschScore: Math.max(0, Math.min(100, parseFloat(metrics.fleschScore) || 50)),
-            gradeLevel: Math.max(0, Math.min(20, parseFloat(metrics.gradeLevel) || 12)),
-            avgSentenceLength: Math.max(0, parseFloat(metrics.avgSentenceLength) || 15),
-            avgSyllablesPerWord: Math.max(1, parseFloat(metrics.avgSyllablesPerWord) || 1.5),
-            wordCount: Math.max(0, parseInt(metrics.wordCount) || 0),
-            sentenceCount: Math.max(0, parseInt(metrics.sentenceCount) || 0),
-            complexWordsPercent: Math.max(0, Math.min(100, parseFloat(metrics.complexWordsPercent) || 15))
+            fleschScore: Math.max(0, Math.min(100, parseFloat(String(metricsObj.fleschScore)) || 50)),
+            gradeLevel: Math.max(0, Math.min(20, parseFloat(String(metricsObj.gradeLevel)) || 12)),
+            avgSentenceLength: Math.max(0, parseFloat(String(metricsObj.avgSentenceLength)) || 15),
+            avgSyllablesPerWord: Math.max(1, parseFloat(String(metricsObj.avgSyllablesPerWord)) || 1.5),
+            wordCount: Math.max(0, parseInt(String(metricsObj.wordCount)) || 0),
+            sentenceCount: Math.max(0, parseInt(String(metricsObj.sentenceCount)) || 0),
+            complexWordsPercent: Math.max(0, Math.min(100, parseFloat(String(metricsObj.complexWordsPercent)) || 15))
         };
     }
     catch (error) {
@@ -474,10 +478,11 @@ function getDefaultReadabilityMetrics() {
  * @returns Formatted AI analysis error
  */
 function createParseError(message, originalError) {
+    const errorMessage = originalError instanceof Error ? originalError.message : 'Unknown error';
     return {
         code: 'API_ERROR',
         message: 'Failed to parse AI analysis response',
-        details: `${message}: ${(originalError === null || originalError === void 0 ? void 0 : originalError.message) || 'Unknown error'}`
+        details: `${message}: ${errorMessage}`
     };
 }
 /**
@@ -487,12 +492,12 @@ function createParseError(message, originalError) {
  * @param options - Original analysis options for context
  * @returns Parsed response with fallback data if needed
  */
-function parseResponseWithRecovery(response, options) {
+function parseResponseWithRecovery(response) {
     try {
         return parseAndValidateResponse(response);
     }
-    catch (error) {
-        console.error('[ResponseParser] Complete parse failure, using emergency fallback');
+    catch (parseError) {
+        console.error('[ResponseParser] Complete parse failure, using emergency fallback:', parseError);
         // Emergency fallback - return empty but valid structure
         return {
             grammarSuggestions: [],

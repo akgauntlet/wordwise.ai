@@ -25,7 +25,8 @@ import {
   GrammarSuggestion,
   StyleSuggestion,
   ReadabilitySuggestion,
-  ReadabilityMetrics
+  ReadabilityMetrics,
+  AnalyzeTextRealtimeCallableRequest
 } from '../types/ai';
 import { 
   initializeOpenAI,
@@ -85,7 +86,7 @@ export const analyzeTextRealtime = onCall(
     region: 'us-central1',
     secrets: ['OPENAI_API_KEY']
   },
-  async (request: any) => {
+  async (request: AnalyzeTextRealtimeCallableRequest) => {
     const startTime = Date.now();
     const requestId = request.data.requestId || generateRealtimeRequestId();
     

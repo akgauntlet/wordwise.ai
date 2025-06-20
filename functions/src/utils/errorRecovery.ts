@@ -16,7 +16,14 @@
  */
 
 import { getFirestore } from 'firebase-admin/firestore';
-import { AIAnalysisError, AnalysisOptions } from '../types/ai';
+import { 
+  AIAnalysisError, 
+  AnalysisOptions, 
+  GrammarSuggestion, 
+  StyleSuggestion, 
+  ReadabilitySuggestion, 
+  ReadabilityMetrics 
+} from '../types/ai';
 
 /**
  * Error severity levels for monitoring and alerting
@@ -55,7 +62,13 @@ interface ErrorReport {
     analysisOptions: AnalysisOptions;
     contentLength: number;
     retryAttempt: number;
-    parseMetadata?: any;
+    parseMetadata?: {
+      originalLength: number;
+      cleanedLength: number;
+      parseAttempts: number;
+      warnings: string[];
+      fallbacksUsed: string[];
+    };
   };
   resolution?: {
     recoveryMethod: string;
@@ -98,7 +111,7 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
  * @returns Processed error with recovery suggestions
  */
 export async function handleErrorWithRecovery(
-  error: any,
+  error: unknown,
   context: {
     userId: string;
     requestId: string;
@@ -110,7 +123,19 @@ export async function handleErrorWithRecovery(
   processedError: AIAnalysisError;
   shouldRetry: boolean;
   retryDelay: number;
-  fallbackData?: any;
+  fallbackData?: {
+    grammarSuggestions: GrammarSuggestion[];
+    styleSuggestions: StyleSuggestion[];
+    readabilitySuggestions: ReadabilitySuggestion[];
+    readabilityMetrics: ReadabilityMetrics;
+    parseMetadata?: {
+      originalLength: number;
+      cleanedLength: number;
+      parseAttempts: number;
+      warnings: string[];
+      fallbacksUsed: string[];
+    };
+  };
 }> {
   console.log(`[ErrorRecovery] Processing error for request ${context.requestId}`);
   
@@ -169,44 +194,47 @@ export async function handleErrorWithRecovery(
  * @param error - Error object to categorize
  * @returns Error category for proper handling
  */
-function categorizeError(error: any): ErrorCategory {
+function categorizeError(error: unknown): ErrorCategory {
+  // Type guard to check if error is an object with expected properties
+  const errorObj = error as Record<string, unknown>;
+  
   // Network and timeout errors
-  if (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET') {
+  if (errorObj?.code === 'ETIMEDOUT' || errorObj?.code === 'ECONNRESET') {
     return ErrorCategory.TIMEOUT_ERROR;
   }
   
-  if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+  if (errorObj?.code === 'ENOTFOUND' || errorObj?.code === 'ECONNREFUSED') {
     return ErrorCategory.NETWORK_ERROR;
   }
   
   // OpenAI API specific errors
-  if (error.status) {
-    if (error.status === 429) {
+  if (typeof errorObj?.status === 'number') {
+    if (errorObj.status === 429) {
       return ErrorCategory.RATE_LIMIT_ERROR;
     }
-    if (error.status >= 400 && error.status < 500) {
+    if (errorObj.status >= 400 && errorObj.status < 500) {
       return ErrorCategory.API_ERROR;
     }
-    if (error.status >= 500) {
+    if (errorObj.status >= 500) {
       return ErrorCategory.API_ERROR;
     }
   }
   
   // Parsing and validation errors
-  if (error.message && (
-    error.message.includes('JSON') || 
-    error.message.includes('parse') ||
-    error.message.includes('validation')
+  if (typeof errorObj?.message === 'string' && (
+    errorObj.message.includes('JSON') || 
+    errorObj.message.includes('parse') ||
+    errorObj.message.includes('validation')
   )) {
     return ErrorCategory.PARSE_ERROR;
   }
   
   // AI analysis specific errors
-  if (error.code && [
+  if (typeof errorObj?.code === 'string' && [
     'RATE_LIMIT_EXCEEDED',
     'CONTENT_TOO_LONG',
     'INVALID_CONTENT'
-  ].includes(error.code)) {
+  ].includes(errorObj.code)) {
     return ErrorCategory.VALIDATION_ERROR;
   }
   
@@ -221,7 +249,9 @@ function categorizeError(error: any): ErrorCategory {
  * @param category - Error category
  * @returns Severity level for monitoring
  */
-function determineSeverity(error: any, category: ErrorCategory): ErrorSeverity {
+function determineSeverity(error: unknown, category: ErrorCategory): ErrorSeverity {
+  const errorObj = error as Record<string, unknown>;
+  
   switch (category) {
     case ErrorCategory.RATE_LIMIT_ERROR:
       return ErrorSeverity.HIGH;
@@ -237,7 +267,7 @@ function determineSeverity(error: any, category: ErrorCategory): ErrorSeverity {
       return ErrorSeverity.MEDIUM;
     
     case ErrorCategory.API_ERROR:
-      if (error.status >= 500) {
+      if (typeof errorObj?.status === 'number' && errorObj.status >= 500) {
         return ErrorSeverity.HIGH;
       }
       return ErrorSeverity.MEDIUM;
@@ -254,7 +284,9 @@ function determineSeverity(error: any, category: ErrorCategory): ErrorSeverity {
  * @param category - Error category
  * @returns Standardized AI analysis error
  */
-function processError(error: any, category: ErrorCategory): AIAnalysisError {
+function processError(error: unknown, category: ErrorCategory): AIAnalysisError {
+  const errorObj = error as Record<string, unknown>;
+  
   switch (category) {
     case ErrorCategory.RATE_LIMIT_ERROR:
       return {
@@ -273,8 +305,8 @@ function processError(error: any, category: ErrorCategory): AIAnalysisError {
     case ErrorCategory.VALIDATION_ERROR:
       return {
         code: 'INVALID_CONTENT',
-        message: error.message || 'Content validation failed',
-        details: error.details || 'Content does not meet analysis requirements'
+        message: (typeof errorObj?.message === 'string' ? errorObj.message : 'Content validation failed'),
+        details: (typeof errorObj?.details === 'string' ? errorObj.details : 'Content does not meet analysis requirements')
       };
     
     case ErrorCategory.TIMEOUT_ERROR:
@@ -296,7 +328,7 @@ function processError(error: any, category: ErrorCategory): AIAnalysisError {
       return {
         code: 'API_ERROR',
         message: 'Analysis service temporarily unavailable. Please try again.',
-        details: error.message || 'API error'
+        details: (typeof errorObj?.message === 'string' ? errorObj.message : 'API error')
       };
   }
 }
@@ -357,8 +389,21 @@ function shouldProvideFallback(category: ErrorCategory, severity: ErrorSeverity)
  * @param options - Original analysis options
  * @returns Basic fallback analysis result
  */
-function generateFallbackResponse(options: AnalysisOptions): any {
-  console.log('[ErrorRecovery] Generating fallback response');
+function generateFallbackResponse(_options: AnalysisOptions): {
+  grammarSuggestions: GrammarSuggestion[];
+  styleSuggestions: StyleSuggestion[];
+  readabilitySuggestions: ReadabilitySuggestion[];
+  readabilityMetrics: ReadabilityMetrics;
+  parseMetadata: {
+    originalLength: number;
+    cleanedLength: number;
+    parseAttempts: number;
+    warnings: string[];
+    fallbacksUsed: string[];
+  };
+} {
+  console.log('[ErrorRecovery] Generating fallback response for options:', _options);
+  // Note: Currently returns default values regardless of options
   
   return {
     grammarSuggestions: [],
@@ -451,7 +496,7 @@ export async function retryWithBackoff<T>(
   },
   config: RetryConfig = DEFAULT_RETRY_CONFIG
 ): Promise<T> {
-  let lastError: any;
+  let lastError: unknown;
   
   for (let attempt = 0; attempt <= config.maxAttempts; attempt++) {
     try {

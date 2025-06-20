@@ -67,7 +67,7 @@ export declare function parseOpenAIResponse(response: string, options?: Analysis
  * @param error - Error from OpenAI API call
  * @returns Structured error information
  */
-export declare function handleOpenAIError(error: any): AIAnalysisError;
+export declare function handleOpenAIError(error: unknown): AIAnalysisError;
 /**
  * Calculate content hash for caching purposes
  *

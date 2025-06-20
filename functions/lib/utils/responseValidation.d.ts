@@ -14,7 +14,7 @@
  * - Handle malformed or incomplete responses gracefully
  * - Provide fallback mechanisms for partial data
  */
-import { GrammarSuggestion, StyleSuggestion, ReadabilitySuggestion, ReadabilityMetrics, AnalysisOptions } from '../types/ai';
+import { GrammarSuggestion, StyleSuggestion, ReadabilitySuggestion, ReadabilityMetrics } from '../types/ai';
 /**
  * Parsed response interface with metadata
  */
@@ -61,6 +61,6 @@ export declare function parseAndValidateResponse(response: string, config?: Pars
  * @param options - Original analysis options for context
  * @returns Parsed response with fallback data if needed
  */
-export declare function parseResponseWithRecovery(response: string, options: AnalysisOptions): ParsedResponse;
+export declare function parseResponseWithRecovery(response: string): ParsedResponse;
 export {};
 //# sourceMappingURL=responseValidation.d.ts.map

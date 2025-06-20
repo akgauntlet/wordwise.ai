@@ -9,11 +9,13 @@
 
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/hooks/auth/useAuthContext";
+import { useAuth } from "@/hooks/auth/useAuth";
 import { DocumentList } from "@/components/dashboard/DocumentList";
 import { useDocuments } from "@/hooks/document/useDocuments";
 import { PageErrorBoundary } from "@/components/layout";
-import { FileText, Plus, User } from "lucide-react";
+import { setActiveDocument } from "@/lib/utils";
+import { importDocument } from "@/services/document/importService";
+import { FileText, Plus, User, Upload } from "lucide-react";
 
 /**
  * Dashboard page component for authenticated users
@@ -38,6 +40,23 @@ function DashboardPageContent() {
     }
   };
 
+  /**
+   * Handle file import
+   */
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    try {
+      const documentId = await importDocument(file, user.uid);
+      setActiveDocument(documentId);
+      navigate(`/editor/${documentId}`);
+    } catch (error) {
+      console.error('Import failed:', error);
+      // Could add toast notification here
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-8">
@@ -47,7 +66,7 @@ function DashboardPageContent() {
           {/* Quick Actions */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-6">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="cursor-pointer hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out" onClick={handleCreateDocument}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -63,6 +82,33 @@ function DashboardPageContent() {
                     Open the editor to begin writing your essay with real-time grammar and style suggestions.
                   </p>
                 </CardContent>
+              </Card>
+
+              <Card 
+                className="cursor-pointer hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out relative"
+                onClick={() => document.getElementById('file-import')?.click()}
+              >
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Upload className="h-5 w-5 text-purple-600" />
+                    Import Document
+                  </CardTitle>
+                  <CardDescription>
+                    Upload existing documents
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Import .txt, .doc, .docx, or .pdf files to continue editing with AI assistance.
+                  </p>
+                </CardContent>
+                <input
+                  id="file-import"
+                  type="file"
+                  accept=".txt,.doc,.docx,.pdf"
+                  onChange={handleFileImport}
+                  className="hidden"
+                />
               </Card>
 
               <Card className="cursor-pointer hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out" onClick={() => navigate('/documents')}>

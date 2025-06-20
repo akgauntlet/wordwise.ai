@@ -256,4 +256,44 @@ export interface DocumentFilter {
     field: "createdAt" | "updatedAt" | "title" | "wordCount";
     direction: "asc" | "desc";
   };
-} 
+}
+
+/**
+ * Supported import file formats
+ */
+export type ImportFileFormat = 'txt' | 'doc' | 'docx' | 'pdf';
+
+/**
+ * Import progress status
+ */
+export type ImportStatus = 'idle' | 'uploading' | 'parsing' | 'analyzing' | 'complete' | 'error';
+
+/**
+ * Import operation data
+ */
+export interface ImportOperation {
+  /** Unique operation identifier */
+  id: string;
+  /** Original file name */
+  fileName: string;
+  /** File size in bytes */
+  fileSize: number;
+  /** File format */
+  format: ImportFileFormat;
+  /** Current status */
+  status: ImportStatus;
+  /** Progress percentage (0-100) */
+  progress: number;
+  /** Current operation message */
+  message: string;
+  /** Error message if operation failed */
+  error?: string;
+  /** Created document ID when complete */
+  documentId?: string;
+  /** Timestamp when operation started */
+  startedAt: Date;
+  /** Timestamp when operation completed */
+  completedAt?: Date;
+}
+
+ 

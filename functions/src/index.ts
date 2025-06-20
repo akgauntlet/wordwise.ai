@@ -23,10 +23,9 @@ initializeApp();
 // Export all functions
 export { analyzeText } from './ai/analyzeText';
 export { analyzeTextRealtime } from './ai/analyzeTextRealtime';
+export { parseDocument } from './document/parseDocument';
 
 // Future functions will be exported here as they are implemented:
-// export { parseDocument } from './document/parseDocument';
-// export { generateExport } from './document/generateExport';
 // export { manageVersions } from './document/manageVersions';
 // export { cleanupCache } from './maintenance/cleanupCache';
 // export { rateLimitCleanup } from './maintenance/rateLimitCleanup'; 

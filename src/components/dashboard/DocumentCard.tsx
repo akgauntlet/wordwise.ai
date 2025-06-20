@@ -118,7 +118,7 @@ export function DocumentCard({
                 {document.language.toUpperCase()}
               </span>
               {isCurrentlyActive && (
-                <span className="text-xs text-primary font-medium">Active</span>
+                <span className="text-xs text-primary font-medium">Current Document</span>
               )}
             </CardDescription>
           </div>

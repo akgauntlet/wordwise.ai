@@ -20,8 +20,7 @@ import {
   StyleSuggestion, 
   ReadabilitySuggestion,
   ReadabilityMetrics,
-  AIAnalysisError,
-  AnalysisOptions
+  AIAnalysisError
 } from '../types/ai';
 
 /**
@@ -53,6 +52,14 @@ interface ParseConfig {
   validateSuggestionContent: boolean;
   /** Minimum confidence threshold for suggestions */
   minConfidenceThreshold: number;
+}
+
+interface ParseMetadata {
+  originalLength: number;
+  cleanedLength: number;
+  parseAttempts: number;
+  warnings: string[];
+  fallbacksUsed: string[];
 }
 
 /**
@@ -94,7 +101,7 @@ export function parseAndValidateResponse(
   parseMetadata.parseAttempts++;
 
   // Step 2: Attempt primary JSON parsing
-  let parsedData: any;
+  let parsedData: Record<string, unknown>;
   try {
     parsedData = JSON.parse(cleanedResponse);
     console.log('[ResponseParser] Primary JSON parse successful');
@@ -164,14 +171,20 @@ function cleanResponse(response: string): string {
  * @param metadata - Parse metadata for tracking
  * @returns Parsed data object or throws error
  */
-function attemptFallbackParsing(response: string, metadata: any): any {
+function attemptFallbackParsing(response: string, metadata: {
+  originalLength: number;
+  cleanedLength: number;
+  parseAttempts: number;
+  warnings: string[];
+  fallbacksUsed: string[];
+}): Record<string, unknown> {
   const fallbackAttempts = [
     // Attempt 1: Extract individual suggestion arrays
     () => extractSuggestionArrays(response),
     // Attempt 2: Parse partial JSON objects
     () => parsePartialJson(response),
     // Attempt 3: Extract text-based suggestions
-    () => extractTextBasedSuggestions(response)
+    () => extractTextBasedSuggestions()
   ];
 
   for (let i = 0; i < fallbackAttempts.length; i++) {
@@ -195,7 +208,7 @@ function attemptFallbackParsing(response: string, metadata: any): any {
  * @param response - Response text
  * @returns Structured data object
  */
-function extractSuggestionArrays(response: string): any {
+function extractSuggestionArrays(response: string): Record<string, unknown> {
   const result = {
     grammarSuggestions: [],
     styleSuggestions: [],
@@ -208,8 +221,8 @@ function extractSuggestionArrays(response: string): any {
   if (grammarMatch) {
     try {
       result.grammarSuggestions = JSON.parse(grammarMatch[1]);
-    } catch (error) {
-      console.warn('[ResponseParser] Failed to parse grammar suggestions array');
+    } catch (parseError) {
+      console.warn('[ResponseParser] Failed to parse grammar suggestions array:', parseError);
     }
   }
 
@@ -218,8 +231,8 @@ function extractSuggestionArrays(response: string): any {
   if (styleMatch) {
     try {
       result.styleSuggestions = JSON.parse(styleMatch[1]);
-    } catch (error) {
-      console.warn('[ResponseParser] Failed to parse style suggestions array');
+    } catch (parseError) {
+      console.warn('[ResponseParser] Failed to parse style suggestions array:', parseError);
     }
   }
 
@@ -228,8 +241,8 @@ function extractSuggestionArrays(response: string): any {
   if (readabilityMatch) {
     try {
       result.readabilitySuggestions = JSON.parse(readabilityMatch[1]);
-    } catch (error) {
-      console.warn('[ResponseParser] Failed to parse readability suggestions array');
+    } catch (parseError) {
+      console.warn('[ResponseParser] Failed to parse readability suggestions array:', parseError);
     }
   }
 
@@ -242,7 +255,7 @@ function extractSuggestionArrays(response: string): any {
  * @param response - Response text
  * @returns Partial data object
  */
-function parsePartialJson(response: string): any {
+function parsePartialJson(response: string): Record<string, unknown> {
   // Try to find the largest valid JSON object
   const braceCount = (response.match(/{/g) || []).length;
   const closeBraceCount = (response.match(/}/g) || []).length;
@@ -272,7 +285,7 @@ function parsePartialJson(response: string): any {
  * @param response - Response text
  * @returns Basic data structure with extracted suggestions
  */
-function extractTextBasedSuggestions(response: string): any {
+function extractTextBasedSuggestions(): Record<string, unknown> {
   // This is a last resort - extract any structured information
   const result = {
     grammarSuggestions: [],
@@ -296,15 +309,25 @@ function extractTextBasedSuggestions(response: string): any {
  * @returns Validated suggestions
  */
 function validateAndExtractSuggestions(
-  data: any, 
+  data: Record<string, unknown>, 
   config: ParseConfig, 
-  metadata: any
+  metadata: {
+    originalLength: number;
+    cleanedLength: number;
+    parseAttempts: number;
+    warnings: string[];
+    fallbacksUsed: string[];
+  }
 ): {
   grammarSuggestions: GrammarSuggestion[];
   styleSuggestions: StyleSuggestion[];
   readabilitySuggestions: ReadabilitySuggestion[];
 } {
-  const result = {
+  const result: {
+    grammarSuggestions: GrammarSuggestion[];
+    styleSuggestions: StyleSuggestion[];
+    readabilitySuggestions: ReadabilitySuggestion[];
+  } = {
     grammarSuggestions: [],
     styleSuggestions: [],
     readabilitySuggestions: []
@@ -312,8 +335,8 @@ function validateAndExtractSuggestions(
 
   // Validate grammar suggestions
   if (Array.isArray(data.grammarSuggestions)) {
-    result.grammarSuggestions = data.grammarSuggestions
-      .map((suggestion: any) => validateGrammarSuggestion(suggestion, config, metadata))
+    result.grammarSuggestions = (data.grammarSuggestions as unknown[])
+      .map((suggestion: unknown) => validateGrammarSuggestion(suggestion, config, metadata))
       .filter((suggestion: GrammarSuggestion | null): suggestion is GrammarSuggestion => 
         suggestion !== null
       )
@@ -324,8 +347,8 @@ function validateAndExtractSuggestions(
 
   // Validate style suggestions  
   if (Array.isArray(data.styleSuggestions)) {
-    result.styleSuggestions = data.styleSuggestions
-      .map((suggestion: any) => validateStyleSuggestion(suggestion, config, metadata))
+    result.styleSuggestions = (data.styleSuggestions as unknown[])
+      .map((suggestion: unknown) => validateStyleSuggestion(suggestion, config, metadata))
       .filter((suggestion: StyleSuggestion | null): suggestion is StyleSuggestion => 
         suggestion !== null
       )
@@ -336,8 +359,8 @@ function validateAndExtractSuggestions(
 
   // Validate readability suggestions
   if (Array.isArray(data.readabilitySuggestions)) {
-    result.readabilitySuggestions = data.readabilitySuggestions
-      .map((suggestion: any) => validateReadabilitySuggestion(suggestion, config, metadata))
+    result.readabilitySuggestions = (data.readabilitySuggestions as unknown[])
+      .map((suggestion: unknown) => validateReadabilitySuggestion(suggestion, config, metadata))
       .filter((suggestion: ReadabilitySuggestion | null): suggestion is ReadabilitySuggestion => 
         suggestion !== null
       )
@@ -360,41 +383,49 @@ function validateAndExtractSuggestions(
  * @returns Validated grammar suggestion or null if invalid
  */
 function validateGrammarSuggestion(
-  suggestion: any, 
+  suggestion: unknown, 
   config: ParseConfig, 
-  metadata: any
+  metadata: {
+    originalLength: number;
+    cleanedLength: number;
+    parseAttempts: number;
+    warnings: string[];
+    fallbacksUsed: string[];
+  }
 ): GrammarSuggestion | null {
   try {
+    const suggestionObj = suggestion as Record<string, unknown>;
+    
     // Required fields validation
-    if (!suggestion.id || !suggestion.originalText || !suggestion.suggestedText) {
+    if (!suggestionObj.id || !suggestionObj.originalText || !suggestionObj.suggestedText) {
       metadata.warnings.push('Grammar suggestion missing required fields');
       return null;
     }
 
     // Confidence threshold check
-    const confidence = typeof suggestion.confidence === 'number' ? suggestion.confidence : 0.5;
+    const confidence = typeof suggestionObj.confidence === 'number' ? suggestionObj.confidence : 0.5;
     if (confidence < config.minConfidenceThreshold) {
       metadata.warnings.push(`Grammar suggestion confidence too low: ${confidence}`);
       return null;
     }
 
     // Text position validation
-    const startOffset = Math.max(0, parseInt(suggestion.startOffset) || 0);
-    const endOffset = Math.max(startOffset, parseInt(suggestion.endOffset) || startOffset);
+    const startOffset = Math.max(0, parseInt(String(suggestionObj.startOffset)) || 0);
+    const endOffset = Math.max(startOffset, parseInt(String(suggestionObj.endOffset)) || startOffset);
 
     return {
-      id: String(suggestion.id),
+      id: String(suggestionObj.id),
       type: 'grammar',
-      severity: validateSeverity(suggestion.severity),
+      severity: validateSeverity(suggestionObj.severity),
       startOffset,
       endOffset,
-      originalText: String(suggestion.originalText),
-      suggestedText: String(suggestion.suggestedText),
-      explanation: String(suggestion.explanation || 'Grammar correction suggested'),
-      category: String(suggestion.category || 'general'),
+      originalText: String(suggestionObj.originalText),
+      suggestedText: String(suggestionObj.suggestedText),
+      explanation: String(suggestionObj.explanation || 'Grammar correction suggested'),
+      category: String(suggestionObj.category || 'general'),
       confidence,
-      grammarRule: String(suggestion.grammarRule || 'General Grammar'),
-      eslExplanation: String(suggestion.eslExplanation || '')
+      grammarRule: String(suggestionObj.grammarRule || 'General Grammar'),
+      eslExplanation: String(suggestionObj.eslExplanation || '')
     };
   } catch (error) {
     metadata.warnings.push(`Failed to validate grammar suggestion: ${error}`);
@@ -411,41 +442,43 @@ function validateGrammarSuggestion(
  * @returns Validated style suggestion or null if invalid
  */
 function validateStyleSuggestion(
-  suggestion: any, 
+  suggestion: unknown, 
   config: ParseConfig, 
-  metadata: any
+  metadata: ParseMetadata
 ): StyleSuggestion | null {
   try {
+    const suggestionObj = suggestion as Record<string, unknown>;
+    
     // Required fields validation
-    if (!suggestion.id || !suggestion.originalText || !suggestion.suggestedText) {
+    if (!suggestionObj.id || !suggestionObj.originalText || !suggestionObj.suggestedText) {
       metadata.warnings.push('Style suggestion missing required fields');
       return null;
     }
 
     // Confidence threshold check
-    const confidence = typeof suggestion.confidence === 'number' ? suggestion.confidence : 0.5;
+    const confidence = typeof suggestionObj.confidence === 'number' ? suggestionObj.confidence : 0.5;
     if (confidence < config.minConfidenceThreshold) {
       metadata.warnings.push(`Style suggestion confidence too low: ${confidence}`);
       return null;
     }
 
     // Text position validation
-    const startOffset = Math.max(0, parseInt(suggestion.startOffset) || 0);
-    const endOffset = Math.max(startOffset, parseInt(suggestion.endOffset) || startOffset);
+    const startOffset = Math.max(0, parseInt(String(suggestionObj.startOffset)) || 0);
+    const endOffset = Math.max(startOffset, parseInt(String(suggestionObj.endOffset)) || startOffset);
 
     return {
-      id: String(suggestion.id),
+      id: String(suggestionObj.id),
       type: 'style',
-      severity: validateSeverity(suggestion.severity),
+      severity: validateSeverity(suggestionObj.severity),
       startOffset,
       endOffset,
-      originalText: String(suggestion.originalText),
-      suggestedText: String(suggestion.suggestedText),
-      explanation: String(suggestion.explanation || 'Style improvement suggested'),
-      category: String(suggestion.category || 'general'),
+      originalText: String(suggestionObj.originalText),
+      suggestedText: String(suggestionObj.suggestedText),
+      explanation: String(suggestionObj.explanation || 'Style improvement suggested'),
+      category: String(suggestionObj.category || 'general'),
       confidence,
-      styleCategory: validateStyleCategory(suggestion.styleCategory),
-      impact: validateImpact(suggestion.impact)
+      styleCategory: validateStyleCategory(suggestionObj.styleCategory),
+      impact: validateImpact(suggestionObj.impact)
     };
   } catch (error) {
     metadata.warnings.push(`Failed to validate style suggestion: ${error}`);
@@ -462,41 +495,43 @@ function validateStyleSuggestion(
  * @returns Validated readability suggestion or null if invalid
  */
 function validateReadabilitySuggestion(
-  suggestion: any, 
+  suggestion: unknown, 
   config: ParseConfig, 
-  metadata: any
+  metadata: ParseMetadata
 ): ReadabilitySuggestion | null {
   try {
+    const suggestionObj = suggestion as Record<string, unknown>;
+    
     // Required fields validation
-    if (!suggestion.id || !suggestion.originalText || !suggestion.suggestedText) {
+    if (!suggestionObj.id || !suggestionObj.originalText || !suggestionObj.suggestedText) {
       metadata.warnings.push('Readability suggestion missing required fields');
       return null;
     }
 
     // Confidence threshold check
-    const confidence = typeof suggestion.confidence === 'number' ? suggestion.confidence : 0.5;
+    const confidence = typeof suggestionObj.confidence === 'number' ? suggestionObj.confidence : 0.5;
     if (confidence < config.minConfidenceThreshold) {
       metadata.warnings.push(`Readability suggestion confidence too low: ${confidence}`);
       return null;
     }
 
     // Text position validation
-    const startOffset = Math.max(0, parseInt(suggestion.startOffset) || 0);
-    const endOffset = Math.max(startOffset, parseInt(suggestion.endOffset) || startOffset);
+    const startOffset = Math.max(0, parseInt(String(suggestionObj.startOffset)) || 0);
+    const endOffset = Math.max(startOffset, parseInt(String(suggestionObj.endOffset)) || startOffset);
 
     return {
-      id: String(suggestion.id),
+      id: String(suggestionObj.id),
       type: 'readability',
-      severity: validateSeverity(suggestion.severity),
+      severity: validateSeverity(suggestionObj.severity),
       startOffset,
       endOffset,
-      originalText: String(suggestion.originalText),
-      suggestedText: String(suggestion.suggestedText),
-      explanation: String(suggestion.explanation || 'Readability improvement suggested'),
-      category: String(suggestion.category || 'general'),
+      originalText: String(suggestionObj.originalText),
+      suggestedText: String(suggestionObj.suggestedText),
+      explanation: String(suggestionObj.explanation || 'Readability improvement suggested'),
+      category: String(suggestionObj.category || 'general'),
       confidence,
-      metric: validateReadabilityMetric(suggestion.metric),
-      targetLevel: String(suggestion.targetLevel || 'College level')
+      metric: validateReadabilityMetric(suggestionObj.metric),
+      targetLevel: String(suggestionObj.targetLevel || 'College level')
     };
   } catch (error) {
     metadata.warnings.push(`Failed to validate readability suggestion: ${error}`);
@@ -511,21 +546,22 @@ function validateReadabilitySuggestion(
  * @param metadata - Parse metadata
  * @returns Validated readability metrics
  */
-function validateReadabilityMetrics(metrics: any, metadata: any): ReadabilityMetrics {
+function validateReadabilityMetrics(metrics: unknown, metadata: ParseMetadata): ReadabilityMetrics {
   if (!metrics || typeof metrics !== 'object') {
     metadata.warnings.push('Readability metrics missing or invalid, using defaults');
     return getDefaultReadabilityMetrics();
   }
 
   try {
+    const metricsObj = metrics as Record<string, unknown>;
     return {
-      fleschScore: Math.max(0, Math.min(100, parseFloat(metrics.fleschScore) || 50)),
-      gradeLevel: Math.max(0, Math.min(20, parseFloat(metrics.gradeLevel) || 12)),
-      avgSentenceLength: Math.max(0, parseFloat(metrics.avgSentenceLength) || 15),
-      avgSyllablesPerWord: Math.max(1, parseFloat(metrics.avgSyllablesPerWord) || 1.5),
-      wordCount: Math.max(0, parseInt(metrics.wordCount) || 0),
-      sentenceCount: Math.max(0, parseInt(metrics.sentenceCount) || 0),
-      complexWordsPercent: Math.max(0, Math.min(100, parseFloat(metrics.complexWordsPercent) || 15))
+      fleschScore: Math.max(0, Math.min(100, parseFloat(String(metricsObj.fleschScore)) || 50)),
+      gradeLevel: Math.max(0, Math.min(20, parseFloat(String(metricsObj.gradeLevel)) || 12)),
+      avgSentenceLength: Math.max(0, parseFloat(String(metricsObj.avgSentenceLength)) || 15),
+      avgSyllablesPerWord: Math.max(1, parseFloat(String(metricsObj.avgSyllablesPerWord)) || 1.5),
+      wordCount: Math.max(0, parseInt(String(metricsObj.wordCount)) || 0),
+      sentenceCount: Math.max(0, parseInt(String(metricsObj.sentenceCount)) || 0),
+      complexWordsPercent: Math.max(0, Math.min(100, parseFloat(String(metricsObj.complexWordsPercent)) || 15))
     };
   } catch (error) {
     metadata.warnings.push(`Failed to validate readability metrics: ${error}`);
@@ -536,30 +572,30 @@ function validateReadabilityMetrics(metrics: any, metadata: any): ReadabilityMet
 /**
  * Helper functions for validation
  */
-function validateSeverity(severity: any): 'low' | 'medium' | 'high' {
-  if (['low', 'medium', 'high'].includes(severity)) {
-    return severity;
+function validateSeverity(severity: unknown): 'low' | 'medium' | 'high' {
+  if (['low', 'medium', 'high'].includes(severity as string)) {
+    return severity as 'low' | 'medium' | 'high';
   }
   return 'medium';
 }
 
-function validateStyleCategory(category: any): 'clarity' | 'conciseness' | 'tone' | 'formality' | 'word-choice' {
-  if (['clarity', 'conciseness', 'tone', 'formality', 'word-choice'].includes(category)) {
-    return category;
+function validateStyleCategory(category: unknown): 'clarity' | 'conciseness' | 'tone' | 'formality' | 'word-choice' {
+  if (['clarity', 'conciseness', 'tone', 'formality', 'word-choice'].includes(category as string)) {
+    return category as 'clarity' | 'conciseness' | 'tone' | 'formality' | 'word-choice';
   }
   return 'clarity';
 }
 
-function validateImpact(impact: any): 'low' | 'medium' | 'high' {
-  if (['low', 'medium', 'high'].includes(impact)) {
-    return impact;
+function validateImpact(impact: unknown): 'low' | 'medium' | 'high' {
+  if (['low', 'medium', 'high'].includes(impact as string)) {
+    return impact as 'low' | 'medium' | 'high';
   }
   return 'medium';
 }
 
-function validateReadabilityMetric(metric: any): 'sentence-length' | 'word-complexity' | 'paragraph-structure' | 'transitions' {
-  if (['sentence-length', 'word-complexity', 'paragraph-structure', 'transitions'].includes(metric)) {
-    return metric;
+function validateReadabilityMetric(metric: unknown): 'sentence-length' | 'word-complexity' | 'paragraph-structure' | 'transitions' {
+  if (['sentence-length', 'word-complexity', 'paragraph-structure', 'transitions'].includes(metric as string)) {
+    return metric as 'sentence-length' | 'word-complexity' | 'paragraph-structure' | 'transitions';
   }
   return 'sentence-length';
 }
@@ -583,11 +619,12 @@ function getDefaultReadabilityMetrics(): ReadabilityMetrics {
  * @param originalError - Original error object
  * @returns Formatted AI analysis error
  */
-function createParseError(message: string, originalError: any): AIAnalysisError {
+function createParseError(message: string, originalError: unknown): AIAnalysisError {
+  const errorMessage = originalError instanceof Error ? originalError.message : 'Unknown error';
   return {
     code: 'API_ERROR',
     message: 'Failed to parse AI analysis response',
-    details: `${message}: ${originalError?.message || 'Unknown error'}`
+    details: `${message}: ${errorMessage}`
   };
 }
 
@@ -599,13 +636,12 @@ function createParseError(message: string, originalError: any): AIAnalysisError 
  * @returns Parsed response with fallback data if needed
  */
 export function parseResponseWithRecovery(
-  response: string,
-  options: AnalysisOptions
+  response: string
 ): ParsedResponse {
   try {
     return parseAndValidateResponse(response);
-  } catch (error) {
-    console.error('[ResponseParser] Complete parse failure, using emergency fallback');
+  } catch (parseError) {
+    console.error('[ResponseParser] Complete parse failure, using emergency fallback:', parseError);
     
     // Emergency fallback - return empty but valid structure
     return {

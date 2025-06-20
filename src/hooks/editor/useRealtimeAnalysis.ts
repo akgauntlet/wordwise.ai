@@ -19,10 +19,10 @@
  * CACHING: 24-hour client-side cache with content-hash keys
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase/config';
-import { useAuth } from '@/hooks/auth/useAuthContext';
+import { useAuth } from '@/hooks/auth/useAuth';
 import type { 
   RealtimeAnalysisResult, 
   AnalysisOptions,
@@ -116,7 +116,7 @@ const DEFAULT_CONFIG: Required<Omit<UseRealtimeAnalysisConfig, 'analysisOptions'
  */
 export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
   const { user } = useAuth();
-  const fullConfig = { ...DEFAULT_CONFIG, ...config };
+  const fullConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
   
   // State management
   const [state, setState] = useState<RealtimeAnalysisState>({

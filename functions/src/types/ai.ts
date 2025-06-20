@@ -14,6 +14,8 @@
  * - Ensures type safety for AI operations
  */
 
+import type { CallableRequest } from 'firebase-functions/v2/https';
+
 /**
  * Configuration options for AI text analysis
  */
@@ -43,6 +45,30 @@ export interface AnalyzeTextRequest {
   /** Optional document ID for caching */
   documentId?: string;
 }
+
+/**
+ * Firebase Functions request type for analyzeText callable
+ */
+export type AnalyzeTextCallableRequest = CallableRequest<AnalyzeTextRequest>;
+
+/**
+ * Request payload for real-time text analysis function
+ */
+export interface AnalyzeTextRealtimeRequest {
+  /** Text content to analyze (max 5,000 characters for real-time) */
+  content: string;
+  /** Analysis configuration options */
+  options: AnalysisOptions;
+  /** Optional content hash for caching */
+  contentHash?: string;
+  /** Optional request ID for tracking */
+  requestId?: string;
+}
+
+/**
+ * Firebase Functions request type for analyzeTextRealtime callable
+ */
+export type AnalyzeTextRealtimeCallableRequest = CallableRequest<AnalyzeTextRealtimeRequest>;
 
 /**
  * Base interface for all suggestion types

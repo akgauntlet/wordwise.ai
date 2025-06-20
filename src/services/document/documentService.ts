@@ -131,6 +131,18 @@ export async function createDocument(
     };
 
     const docRef = await addDoc(collection(db, "documents"), documentData);
+    
+    // Create initial version for imported documents with content
+    if (formData.content && plainText.trim().length > 0) {
+      await createDocumentVersion(
+        docRef.id,
+        formData.content,
+        plainText,
+        wordCount,
+        plainText.length
+      );
+    }
+    
     return docRef.id;
   } catch (error) {
     console.error("Error creating document:", error);

@@ -1,17 +1,18 @@
 /**
- * @fileoverview Authentication context and provider
+ * @fileoverview Authentication provider
  * @module hooks/auth/useAuthContext
  * 
  * Dependencies: React, Firebase Auth, Authentication types
  * Usage: Provides global authentication state and methods throughout the app
  */
 
-import { createContext, useContext, useReducer, useEffect } from "react";
+import { useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import type { AuthState, AuthAction } from "@/types/auth";
 import { getUserProfile, createUserProfile } from "@/services/auth/profileService";
+import { AuthContext, type AuthContextType } from "./authContext";
 
 /**
  * Initial authentication state
@@ -23,18 +24,6 @@ const initialAuthState: AuthState = {
   error: null,
   isAuthenticated: false,
 };
-
-/**
- * Authentication context type definition
- */
-interface AuthContextType extends AuthState {
-  /** Sign out the current user */
-  signOut: () => Promise<void>;
-  /** Clear authentication errors */
-  clearError: () => void;
-  /** Refresh user profile */
-  refreshProfile: () => Promise<void>;
-}
 
 /**
  * Authentication reducer for state management
@@ -91,11 +80,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return state;
   }
 }
-
-/**
- * Authentication context
- */
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
  * Authentication provider props
@@ -281,19 +265,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-/**
- * Hook to use authentication context
- * @returns Authentication context value
- * @throws Error if used outside of AuthProvider
- */
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
-  
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  
-  return context;
 } 

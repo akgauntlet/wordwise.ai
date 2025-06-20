@@ -115,37 +115,39 @@ async function handleErrorWithRecovery(error, context) {
  * @returns Error category for proper handling
  */
 function categorizeError(error) {
+    // Type guard to check if error is an object with expected properties
+    const errorObj = error;
     // Network and timeout errors
-    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET') {
+    if ((errorObj === null || errorObj === void 0 ? void 0 : errorObj.code) === 'ETIMEDOUT' || (errorObj === null || errorObj === void 0 ? void 0 : errorObj.code) === 'ECONNRESET') {
         return ErrorCategory.TIMEOUT_ERROR;
     }
-    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+    if ((errorObj === null || errorObj === void 0 ? void 0 : errorObj.code) === 'ENOTFOUND' || (errorObj === null || errorObj === void 0 ? void 0 : errorObj.code) === 'ECONNREFUSED') {
         return ErrorCategory.NETWORK_ERROR;
     }
     // OpenAI API specific errors
-    if (error.status) {
-        if (error.status === 429) {
+    if (typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.status) === 'number') {
+        if (errorObj.status === 429) {
             return ErrorCategory.RATE_LIMIT_ERROR;
         }
-        if (error.status >= 400 && error.status < 500) {
+        if (errorObj.status >= 400 && errorObj.status < 500) {
             return ErrorCategory.API_ERROR;
         }
-        if (error.status >= 500) {
+        if (errorObj.status >= 500) {
             return ErrorCategory.API_ERROR;
         }
     }
     // Parsing and validation errors
-    if (error.message && (error.message.includes('JSON') ||
-        error.message.includes('parse') ||
-        error.message.includes('validation'))) {
+    if (typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.message) === 'string' && (errorObj.message.includes('JSON') ||
+        errorObj.message.includes('parse') ||
+        errorObj.message.includes('validation'))) {
         return ErrorCategory.PARSE_ERROR;
     }
     // AI analysis specific errors
-    if (error.code && [
+    if (typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.code) === 'string' && [
         'RATE_LIMIT_EXCEEDED',
         'CONTENT_TOO_LONG',
         'INVALID_CONTENT'
-    ].includes(error.code)) {
+    ].includes(errorObj.code)) {
         return ErrorCategory.VALIDATION_ERROR;
     }
     // Default to API error for unclassified errors
@@ -159,6 +161,7 @@ function categorizeError(error) {
  * @returns Severity level for monitoring
  */
 function determineSeverity(error, category) {
+    const errorObj = error;
     switch (category) {
         case ErrorCategory.RATE_LIMIT_ERROR:
             return ErrorSeverity.HIGH;
@@ -170,7 +173,7 @@ function determineSeverity(error, category) {
         case ErrorCategory.NETWORK_ERROR:
             return ErrorSeverity.MEDIUM;
         case ErrorCategory.API_ERROR:
-            if (error.status >= 500) {
+            if (typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.status) === 'number' && errorObj.status >= 500) {
                 return ErrorSeverity.HIGH;
             }
             return ErrorSeverity.MEDIUM;
@@ -186,6 +189,7 @@ function determineSeverity(error, category) {
  * @returns Standardized AI analysis error
  */
 function processError(error, category) {
+    const errorObj = error;
     switch (category) {
         case ErrorCategory.RATE_LIMIT_ERROR:
             return {
@@ -202,8 +206,8 @@ function processError(error, category) {
         case ErrorCategory.VALIDATION_ERROR:
             return {
                 code: 'INVALID_CONTENT',
-                message: error.message || 'Content validation failed',
-                details: error.details || 'Content does not meet analysis requirements'
+                message: (typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.message) === 'string' ? errorObj.message : 'Content validation failed'),
+                details: (typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.details) === 'string' ? errorObj.details : 'Content does not meet analysis requirements')
             };
         case ErrorCategory.TIMEOUT_ERROR:
             return {
@@ -222,7 +226,7 @@ function processError(error, category) {
             return {
                 code: 'API_ERROR',
                 message: 'Analysis service temporarily unavailable. Please try again.',
-                details: error.message || 'API error'
+                details: (typeof (errorObj === null || errorObj === void 0 ? void 0 : errorObj.message) === 'string' ? errorObj.message : 'API error')
             };
     }
 }
@@ -269,8 +273,9 @@ function shouldProvideFallback(category, severity) {
  * @param options - Original analysis options
  * @returns Basic fallback analysis result
  */
-function generateFallbackResponse(options) {
-    console.log('[ErrorRecovery] Generating fallback response');
+function generateFallbackResponse(_options) {
+    console.log('[ErrorRecovery] Generating fallback response for options:', _options);
+    // Note: Currently returns default values regardless of options
     return {
         grammarSuggestions: [],
         styleSuggestions: [],

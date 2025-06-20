@@ -11,13 +11,11 @@ import { useParams } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { EnhancedDocumentEditor } from '@/components/editor';
-import { useAuth } from '@/hooks/auth/useAuthContext';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useDocument } from '@/hooks/document';
 import { PageErrorBoundary } from '@/components/layout';
 import { setActiveDocument } from '@/lib/utils';
 import type { TiptapContent } from '@/types/document';
-
-
 
 /**
  * Editor page component
@@ -89,10 +87,6 @@ function EditorPageContent() {
   const handleManualSave = async (content: TiptapContent) => {
     await saveDocument(content, currentTitle);
   };
-
-
-
-
 
   if (!user) {
     return (

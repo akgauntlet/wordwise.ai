@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DocumentCard } from "@/components/dashboard/DocumentCard";
+import { DocumentImport } from "@/components/document/DocumentImport";
 import { useDocuments } from "@/hooks/document/useDocuments";
 import { PageErrorBoundary } from "@/components/layout";
 import { setActiveDocument } from "@/lib/utils";
@@ -21,7 +22,8 @@ import {
   FileText, 
   AlertCircle,
   Loader2,
-  Search
+  Search,
+  Upload
 } from "lucide-react";
 
 /**
@@ -42,6 +44,7 @@ function DocumentsPageContent() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [showImport, setShowImport] = useState(false);
 
   /**
    * Filter documents based on search query (title only)
@@ -134,13 +137,23 @@ function DocumentsPageContent() {
           </p>
         </div>
         
-        <Button 
-          onClick={handleCreateDocument}
-          disabled={!canCreateDocument || saving}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Document
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleCreateDocument}
+            disabled={!canCreateDocument || saving}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Document
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={() => setShowImport(true)}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Import Document
+          </Button>
+        </div>
       </div>
 
       {/* Error display */}
@@ -174,6 +187,19 @@ function DocumentsPageContent() {
             className="pl-10"
           />
         </div>
+      )}
+
+      {/* Import component */}
+      {showImport && (
+        <DocumentImport
+          onImportComplete={(documentId) => {
+            setShowImport(false);
+            setActiveDocument(documentId);
+            navigate(`/editor/${documentId}`);
+          }}
+          onCancel={() => setShowImport(false)}
+          className="mb-6"
+        />
       )}
 
       {/* Documents grid */}
