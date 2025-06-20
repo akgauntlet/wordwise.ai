@@ -93,9 +93,9 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
     },
     {
       label: 'Documents',
-      path: '/',
+      path: '/documents',
       icon: FileText,
-      isActive: location.pathname.startsWith('/editor')
+      isActive: location.pathname === '/documents' || location.pathname.startsWith('/editor')
     }
   ];
 

@@ -1,29 +1,32 @@
 /**
- * @fileoverview Document list component
- * @module components/dashboard/DocumentList
+ * @fileoverview Documents page component
+ * @module pages/DocumentsPage
  * 
- * Dependencies: React, Document hooks, DocumentCard
- * Usage: Display and manage list of recent user documents (last 3)
+ * Dependencies: React, UI components, Document hooks, Authentication
+ * Usage: Dedicated page for viewing and managing all user documents
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DocumentCard } from "./DocumentCard";
+import { DocumentCard } from "@/components/dashboard/DocumentCard";
 import { useDocuments } from "@/hooks/document/useDocuments";
+import { PageErrorBoundary } from "@/components/layout";
 import { 
   Plus, 
   FileText, 
   AlertCircle,
-  Loader2
+  Loader2,
+  Search
 } from "lucide-react";
 
 /**
- * Document list component for managing recent user documents
+ * Documents page content component
  */
-export function DocumentList() {
+function DocumentsPageContent() {
   const navigate = useNavigate();
   const {
     documents,
@@ -36,14 +39,22 @@ export function DocumentList() {
     canCreateDocument
   } = useDocuments();
 
+  const [searchQuery, setSearchQuery] = useState("");
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   /**
-   * Get the 3 most recently updated documents
+   * Filter documents based on search query (title only)
    */
-  const recentDocuments = documents
-    .sort((a, b) => b.updatedAt.toMillis() - a.updatedAt.toMillis())
-    .slice(0, 3);
+  const filteredDocuments = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return documents.sort((a, b) => b.updatedAt.toMillis() - a.updatedAt.toMillis());
+    }
+    
+    const query = searchQuery.toLowerCase();
+    return documents
+      .filter(doc => doc.title.toLowerCase().includes(query))
+      .sort((a, b) => b.updatedAt.toMillis() - a.updatedAt.toMillis());
+  }, [documents, searchQuery]);
 
   /**
    * Handle creating a new document
@@ -75,6 +86,14 @@ export function DocumentList() {
 
 
 
+  /**
+   * Handle viewing document versions (placeholder for now)
+   */
+  const handleViewVersions = (documentId: string) => {
+    // TODO: Implement versions functionality
+    console.log("View versions for document:", documentId);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -102,9 +121,12 @@ export function DocumentList() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Recent documents</h2>
+          <h1 className="text-3xl font-bold">My Documents</h1>
           <p className="text-muted-foreground">
-            Showing your {recentDocuments.length} most recently updated documents
+            {documents.length === 0 
+              ? "No documents yet" 
+              : `${documents.length} document${documents.length === 1 ? '' : 's'} total`
+            }
           </p>
         </div>
         
@@ -137,8 +159,21 @@ export function DocumentList() {
         </Alert>
       )}
 
+      {/* Search Bar */}
+      {documents.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search documents by title..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      )}
+
       {/* Documents grid */}
-      {recentDocuments.length === 0 ? (
+      {documents.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="h-12 w-12 text-muted-foreground mb-4" />
@@ -146,7 +181,7 @@ export function DocumentList() {
               No documents yet
             </CardTitle>
             <CardDescription className="text-center mb-4">
-              Create your first document to get started with writing.
+              Create your first document to get started with writing and AI assistance.
             </CardDescription>
             {canCreateDocument && (
               <Button onClick={handleCreateDocument} disabled={saving}>
@@ -156,18 +191,53 @@ export function DocumentList() {
             )}
           </CardContent>
         </Card>
+      ) : filteredDocuments.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Search className="h-12 w-12 text-muted-foreground mb-4" />
+            <CardTitle className="text-xl mb-2">
+              No documents found
+            </CardTitle>
+            <CardDescription className="text-center mb-4">
+              No documents match your search for "{searchQuery}". Try a different search term.
+            </CardDescription>
+            <Button 
+              variant="outline" 
+              onClick={() => setSearchQuery("")}
+            >
+              Clear Search
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recentDocuments.map((document) => (
+          {filteredDocuments.map((document) => (
             <DocumentCard
               key={document.id}
               document={document}
               onDelete={handleDeleteDocument}
+              onViewVersions={handleViewVersions}
               isDeleting={deletingIds.has(document.id)}
+              showVersionsButton={true}
             />
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Documents page with error boundary
+ */
+export function DocumentsPage() {
+  return (
+    <PageErrorBoundary pageName="Documents">
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="container mx-auto px-4 py-8">
+          <DocumentsPageContent />
+        </div>
+      </div>
+    </PageErrorBoundary>
   );
 } 

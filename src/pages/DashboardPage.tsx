@@ -48,7 +48,7 @@ function DashboardPageContent() {
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleCreateDocument}>
+              <Card className="cursor-pointer hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out" onClick={handleCreateDocument}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Plus className="h-5 w-5 text-blue-600" />
@@ -65,7 +65,7 @@ function DashboardPageContent() {
                 </CardContent>
               </Card>
 
-              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => {}}>
+              <Card className="cursor-pointer hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out" onClick={() => navigate('/documents')}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <FileText className="h-5 w-5 text-green-600" />
@@ -85,13 +85,13 @@ function DashboardPageContent() {
           </div>
 
           {/* Document Management */}
-          <div className="mb-8">
+          <div className="mb-16">
             <DocumentList />
           </div>
 
           {/* User Profile */}
           <div className="mb-8">
-            <Card>
+            <Card className="bg-muted/30 border-muted-foreground/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />

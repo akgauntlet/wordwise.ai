@@ -61,9 +61,7 @@ export function SuggestionDemo() {
   const [selectedSuggestion, setSelectedSuggestion] = useState<WritingSuggestion | null>(null);
   const [popoverPosition] = useState({ x: 400, y: 300 });
 
-  const handleSuggestionClick = (suggestion: WritingSuggestion) => {
-    setSelectedSuggestion(suggestion);
-  };
+
 
   const handleAccept = (suggestion: WritingSuggestion) => {
     setSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
@@ -125,7 +123,6 @@ export function SuggestionDemo() {
       <SuggestionSidebar
         suggestions={suggestions}
         isAnalyzing={false}
-        onSuggestionClick={handleSuggestionClick}
         onAcceptSuggestion={handleAccept}
         onRejectSuggestion={handleReject}
         onAcceptAllType={handleAcceptAllType}

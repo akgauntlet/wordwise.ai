@@ -11,7 +11,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/auth/useAuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AppLayout } from "@/components/layout";
-import { DashboardPage, EditorPage } from "@/pages";
+import { DashboardPage, DocumentsPage, EditorPage } from "@/pages";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
@@ -48,6 +48,7 @@ function App() {
           <AppLayout>
             <Routes>
               <Route path="/" element={<DashboardPage />} />
+              <Route path="/documents" element={<DocumentsPage />} />
               <Route path="/editor/:documentId" element={<EditorPage />} />
             </Routes>
           </AppLayout>
