@@ -51,37 +51,37 @@ const AutoSaveStatus = memo(({ saveStatus }: { saveStatus: string }) => {
   switch (saveStatus) {
     case 'saving':
       return (
-        <div className="flex items-center gap-2 text-sm text-lime-600">
-          <Loader2 className="h-3 w-3 animate-spin" />
-          Saving...
+        <div className="flex items-center gap-2 text-sm font-normal text-blue-400">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Saving...</span>
         </div>
       );
     case 'saved':
       return (
-        <div className="flex items-center gap-2 text-sm text-green-600">
-          <Save className="h-3 w-3" />
-          Saved
+        <div className="flex items-center gap-2 text-sm font-normal text-blue-600">
+          <Save className="h-4 w-4" />
+          <span>Saved</span>
         </div>
       );
     case 'auto-saved':
       return (
-        <div className="flex items-center gap-2 text-sm text-green-600">
-          <Save className="h-3 w-3" />
-          Auto-saved
+        <div className="flex items-center gap-2 text-sm font-normal text-blue-600">
+          <Save className="h-4 w-4" />
+          <span>Auto-saved</span>
         </div>
       );
     case 'error':
       return (
-        <div className="flex items-center gap-2 text-sm text-red-600">
-          <AlertCircle className="h-3 w-3" />
-          Save failed
+        <div className="flex items-center gap-2 text-sm font-normal text-red-600">
+          <AlertCircle className="h-4 w-4" />
+          <span>Save failed</span>
         </div>
       );
     case 'pending':
       return (
-        <div className="flex items-center gap-2 text-sm text-yellow-600">
-          <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-          Unsaved changes
+        <div className="flex items-center gap-2 text-sm font-normal text-black">
+          <div className="w-3 h-3 bg-black rounded-full" />
+          <span className="italic">Unsaved changes</span>
         </div>
       );
     default:
@@ -201,11 +201,12 @@ export const DocumentEditor = memo(function DocumentEditor({
     <div className={`space-y-4 ${className}`}>
       {/* Header with title and auto-save status */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex-1 max-w-[60%] min-w-0">
           <EditableTitle
             title={title}
             onTitleChange={onTitleChange || (() => {})}
             readOnly={readOnly}
+            className="truncate"
           />
           <EditorStats 
             editor={editor} 
@@ -214,15 +215,11 @@ export const DocumentEditor = memo(function DocumentEditor({
           />
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-shrink-0">
           <AutoSaveStatus saveStatus={saveStatus} />
           {onAutoSave && (
             <Button {...saveButtonProps}>
-              {saveStatus === 'saving' ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
+              <Save className="h-4 w-4 mr-2" />
               Save
             </Button>
           )}

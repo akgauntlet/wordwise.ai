@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
+import { getSuggestionCategoryDisplay } from '@/lib/utils';
 import { 
   AlertCircle, 
   Lightbulb, 
@@ -28,8 +28,6 @@ interface SuggestionSidebarProps {
   suggestions: WritingSuggestion[];
   /** Whether suggestions are currently being analyzed */
   isAnalyzing?: boolean;
-  /** Callback when a suggestion is clicked */
-  onSuggestionClick: (suggestion: WritingSuggestion) => void;
   /** Callback when a suggestion is accepted */
   onAcceptSuggestion: (suggestion: WritingSuggestion) => void;
   /** Callback when a suggestion is rejected */
@@ -111,34 +109,41 @@ function getCategoryColors(color: string) {
 }
 
 /**
+ * Get severity-based badge styling
+ */
+function getSeverityBadgeClass(severity: string) {
+  const severityMap = {
+    high: 'bg-red-100 text-red-800 border-red-200',
+    medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    low: 'bg-green-100 text-green-800 border-green-200'
+  };
+  return severityMap[severity.toLowerCase() as keyof typeof severityMap] || 'bg-neutral-100 text-neutral-800 border-neutral-200';
+}
+
+/**
  * Individual suggestion item component
  */
 function SuggestionItem({
   suggestion,
-  onSuggestionClick,
   onAccept,
   onReject
 }: {
   suggestion: WritingSuggestion;
-  onSuggestionClick: (suggestion: WritingSuggestion) => void;
   onAccept: (suggestion: WritingSuggestion) => void;
   onReject: (suggestion: WritingSuggestion) => void;
 }) {
   return (
-    <div className="border rounded-lg p-3 space-y-2 hover:bg-neutral-50 transition-colors">
+    <div className="border rounded-lg p-4 space-y-3 hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200 hover:shadow-sm">
       {/* Suggestion header */}
       <div className="flex items-start justify-between">
-        <button
-          onClick={() => onSuggestionClick(suggestion)}
-          className="flex-1 text-left text-sm font-medium text-neutral-800 hover:text-blue-600 transition-colors"
-        >
-          {suggestion.category}
-        </button>
+        <div className="flex-1 text-left text-sm font-semibold text-neutral-800">
+          {getSuggestionCategoryDisplay(suggestion.type, suggestion.category)}
+        </div>
         <Badge 
           variant="outline" 
-          className="ml-2 text-xs"
+          className={`ml-2 text-xs font-medium ${getSeverityBadgeClass(suggestion.severity)}`}
         >
-          {suggestion.severity}
+          {suggestion.severity.charAt(0).toUpperCase() + suggestion.severity.slice(1)}
         </Badge>
       </div>
 
@@ -164,11 +169,11 @@ function SuggestionItem({
       </p>
 
       {/* Action buttons */}
-      <div className="flex gap-1">
+      <div className="flex gap-2">
         <Button
           onClick={() => onAccept(suggestion)}
           size="sm"
-          className="flex-1 h-7 text-xs"
+          className="flex-1 h-8 text-xs font-medium bg-green-600 hover:bg-green-700 text-white border-green-600"
           variant="default"
         >
           <Check className="h-3 w-3 mr-1" />
@@ -177,7 +182,7 @@ function SuggestionItem({
         <Button
           onClick={() => onReject(suggestion)}
           size="sm"
-          className="flex-1 h-7 text-xs"
+          className="flex-1 h-8 text-xs font-medium border-neutral-300 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-400"
           variant="outline"
         >
           <X className="h-3 w-3 mr-1" />
@@ -252,7 +257,6 @@ function TabNavigation({
 function TabContent({
   category,
   suggestions,
-  onSuggestionClick,
   onAcceptSuggestion,
   onRejectSuggestion,
   onAcceptAll,
@@ -261,7 +265,6 @@ function TabContent({
 }: {
   category: SuggestionCategory;
   suggestions: WritingSuggestion[];
-  onSuggestionClick: (suggestion: WritingSuggestion) => void;
   onAcceptSuggestion: (suggestion: WritingSuggestion) => void;
   onRejectSuggestion: (suggestion: WritingSuggestion) => void;
   onAcceptAll: () => void;
@@ -297,7 +300,7 @@ function TabContent({
             onClick={onAcceptAll}
             size="sm"
             variant="outline"
-            className="flex-1 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600"
+            className="flex-1 border-green-500 text-green-600 hover:bg-green-50 hover:border-green-600"
           >
             <CheckCheck className="h-3 w-3 mr-1" />
             Accept All ({count})
@@ -320,7 +323,6 @@ function TabContent({
           <SuggestionItem
             key={suggestion.id}
             suggestion={suggestion}
-            onSuggestionClick={onSuggestionClick}
             onAccept={onAcceptSuggestion}
             onReject={onRejectSuggestion}
           />
@@ -339,7 +341,6 @@ function TabContent({
 export function SuggestionSidebar({
   suggestions,
   isAnalyzing = false,
-  onSuggestionClick,
   onAcceptSuggestion,
   onRejectSuggestion,
   onAcceptAllType,
@@ -395,12 +396,6 @@ export function SuggestionSidebar({
               {totalSuggestions} suggestion{totalSuggestions !== 1 ? 's' : ''} found
             </p>
           </div>
-          {isAnalyzing && (
-            <div className="flex items-center gap-2 text-sm text-neutral-600">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
-              Analyzing...
-            </div>
-          )}
         </div>
       </div>
 
@@ -417,7 +412,6 @@ export function SuggestionSidebar({
         <TabContent
           category={activeCategory}
           suggestions={activeSuggestions}
-          onSuggestionClick={onSuggestionClick}
           onAcceptSuggestion={onAcceptSuggestion}
           onRejectSuggestion={onRejectSuggestion}
           onAcceptAll={() => onAcceptAllType(activeTab)}

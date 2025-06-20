@@ -232,16 +232,15 @@ export const SuggestionExtension = Extension.create<SuggestionPluginOptions>({
           },
 
           apply(tr: Transaction, decorationSet: DecorationSet) {
-            // Map decorations through transaction
-            decorationSet = decorationSet.map(tr.mapping, tr.doc);
-            
-            // Update decorations if suggestions changed
+            // Check if suggestions were explicitly updated via updateSuggestions command
             const newSuggestions = tr.getMeta(suggestionPluginKey);
-            if (newSuggestions) {
+            if (newSuggestions !== undefined) {
+              // Always use the explicitly provided suggestions
               return createSuggestionDecorations(tr.doc, newSuggestions, onSuggestionClick);
             }
             
-            return decorationSet;
+            // Otherwise, just map existing decorations through the transaction
+            return decorationSet.map(tr.mapping, tr.doc);
           },
         },
 
@@ -309,11 +308,6 @@ export const SuggestionExtension = Extension.create<SuggestionPluginOptions>({
         if (!position) {
           // Text not found - suggestion is no longer applicable
           console.warn(`Cannot apply suggestion ${suggestion.id}: original text "${suggestion.originalText}" not found in document`);
-          
-          // Remove this suggestion from the list since it's no longer valid
-          const currentSuggestions = tr.getMeta(suggestionPluginKey) || this.options.suggestions;
-          const updatedSuggestions = currentSuggestions.filter((s: WritingSuggestion) => s.id !== suggestion.id);
-          tr.setMeta(suggestionPluginKey, updatedSuggestions);
           return false;
         }
 
@@ -331,11 +325,6 @@ export const SuggestionExtension = Extension.create<SuggestionPluginOptions>({
             expectedLength: expectedText.length,
             actualLength: currentText.length
           });
-          
-          // Remove this suggestion from the list since it's no longer valid
-          const currentSuggestions = tr.getMeta(suggestionPluginKey) || this.options.suggestions;
-          const updatedSuggestions = currentSuggestions.filter((s: WritingSuggestion) => s.id !== suggestion.id);
-          tr.setMeta(suggestionPluginKey, updatedSuggestions);
           return false;
         }
         
@@ -348,11 +337,6 @@ export const SuggestionExtension = Extension.create<SuggestionPluginOptions>({
           tr.doc.type.schema.text(suggestion.suggestedText)
         );
         
-        // Remove this suggestion from the list
-        const currentSuggestions = tr.getMeta(suggestionPluginKey) || this.options.suggestions;
-        const updatedSuggestions = currentSuggestions.filter((s: WritingSuggestion) => s.id !== suggestion.id);
-        tr.setMeta(suggestionPluginKey, updatedSuggestions);
-        
         console.log(`Successfully applied suggestion ${suggestion.id}`);
         return true;
       },
@@ -360,11 +344,8 @@ export const SuggestionExtension = Extension.create<SuggestionPluginOptions>({
       /**
        * Reject a suggestion (remove from display)
        */
-      rejectSuggestion: (suggestion: WritingSuggestion) => ({ tr }) => {
-        // Remove this suggestion from the list
-        const currentSuggestions = tr.getMeta(suggestionPluginKey) || this.options.suggestions;
-        const updatedSuggestions = currentSuggestions.filter((s: WritingSuggestion) => s.id !== suggestion.id);
-        tr.setMeta(suggestionPluginKey, updatedSuggestions);
+      rejectSuggestion: (suggestion: WritingSuggestion) => () => {
+        console.log(`Rejecting suggestion ${suggestion.id}`);
         return true;
       },
     };

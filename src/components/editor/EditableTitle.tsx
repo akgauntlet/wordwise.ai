@@ -128,7 +128,7 @@ export function EditableTitle({
     <h1 
       className={`text-2xl font-bold cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 -mx-1 transition-colors ${readOnly ? 'cursor-default' : ''} ${className}`}
       onClick={startEditing}
-      title={readOnly ? undefined : 'Click to edit title'}
+      title={readOnly ? (title || placeholder) : `Click to edit title: ${title || placeholder}`}
     >
       {title || placeholder}
     </h1>

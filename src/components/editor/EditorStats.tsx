@@ -12,7 +12,7 @@ import {
   FileText, 
   Type, 
   Clock, 
-  Hash,
+  Keyboard,
   Percent,
   Target,
   TrendingUp
@@ -121,15 +121,15 @@ const CompactStats = memo(({
 }) => (
   <div className={`flex items-center gap-4 text-sm text-muted-foreground ${className}`}>
     <div className="flex items-center gap-1">
-      <Type className="h-3 w-3" />
+      <Type className="h-4 w-4" />
       <span>{stats.words} words</span>
     </div>
     <div className="flex items-center gap-1">
-      <Hash className="h-3 w-3" />
+      <Keyboard className="h-4 w-4" />
       <span>{stats.characters} characters</span>
     </div>
     <div className="flex items-center gap-1">
-      <Clock className="h-3 w-3" />
+      <Clock className="h-4 w-4" />
       <span>{stats.readingTime} min read</span>
     </div>
   </div>
@@ -160,7 +160,7 @@ const DetailedStats = memo(({
         description="Total word count"
       />
       <StatItem
-        icon={Hash}
+        icon={Keyboard}
         label="Characters"
         value={stats.characters}
         color="text-green-600"

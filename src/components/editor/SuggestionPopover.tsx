@@ -6,8 +6,8 @@
  * Usage: Shows detailed suggestion information with accept/reject actions
  */
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -15,10 +15,9 @@ import {
   X, 
   AlertCircle, 
   Lightbulb, 
-  BookOpen,
-  ChevronDown,
-  ChevronUp
+  BookOpen
 } from 'lucide-react';
+import { getSuggestionCategoryDisplay } from '@/lib/utils';
 import type { WritingSuggestion } from './SuggestionExtension';
 
 /**
@@ -108,7 +107,6 @@ export function SuggestionPopover({
   onClose,
   className = ''
 }: SuggestionPopoverProps) {
-  const [showDetails, setShowDetails] = useState(false);
 
   // Close popover when clicking outside or pressing Escape
   useEffect(() => {
@@ -159,96 +157,23 @@ export function SuggestionPopover({
     onClose();
   };
 
-  /**
-   * Get additional details for grammar suggestions
-   */
-  const getGrammarDetails = (suggestion: WritingSuggestion) => {
-    if (suggestion.type === 'grammar') {
-      const grammarSuggestion = suggestion as any; // Type assertion for additional properties
-      if (grammarSuggestion.grammarRule) {
-        return (
-          <div className="mt-3 pt-3 border-t border-neutral-200">
-            <p className="text-sm font-medium text-neutral-700 mb-1">
-              Grammar Rule: {grammarSuggestion.grammarRule}
-            </p>
-            {grammarSuggestion.eslExplanation && (
-              <p className="text-sm text-neutral-600">
-                {grammarSuggestion.eslExplanation}
-              </p>
-            )}
-          </div>
-        );
-      }
-    }
-    return null;
-  };
 
-  /**
-   * Get additional details for style suggestions
-   */
-  const getStyleDetails = (suggestion: WritingSuggestion) => {
-    if (suggestion.type === 'style') {
-      const styleSuggestion = suggestion as any; // Type assertion for additional properties
-      if (styleSuggestion.styleCategory) {
-        return (
-          <div className="mt-3 pt-3 border-t border-neutral-200">
-            <p className="text-sm font-medium text-neutral-700 mb-1">
-              Style Category: {styleSuggestion.styleCategory}
-            </p>
-            {styleSuggestion.impact && (
-              <p className="text-sm text-neutral-600">
-                Impact: {styleSuggestion.impact}
-              </p>
-            )}
-          </div>
-        );
-      }
-    }
-    return null;
-  };
-
-  /**
-   * Get additional details for readability suggestions
-   */
-  const getReadabilityDetails = (suggestion: WritingSuggestion) => {
-    if (suggestion.type === 'readability') {
-      const readabilitySuggestion = suggestion as any; // Type assertion for additional properties
-      if (readabilitySuggestion.metric || readabilitySuggestion.targetLevel) {
-        return (
-          <div className="mt-3 pt-3 border-t border-neutral-200">
-            {readabilitySuggestion.metric && (
-              <p className="text-sm font-medium text-neutral-700 mb-1">
-                Metric: {readabilitySuggestion.metric}
-              </p>
-            )}
-            {readabilitySuggestion.targetLevel && (
-              <p className="text-sm text-neutral-600">
-                Target Level: {readabilitySuggestion.targetLevel}
-              </p>
-            )}
-          </div>
-        );
-      }
-    }
-    return null;
-  };
 
   return (
     <div
       className={`suggestion-popover fixed z-50 ${className}`}
       style={{
-        left: `${position.x}px`,
+        left: `${position.x - 160}px`, // Center horizontally (half of w-80 = 160px)
         top: `${position.y}px`,
-        transform: 'translate(-50%, -100%)',
       }}
     >
-      <Card className={`w-80 shadow-lg ${colors.border} animate-in fade-in-0 zoom-in-95 duration-200`}>
+      <Card className="w-80 shadow-lg animate-in fade-in-0 zoom-in-95 duration-200">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
               <Icon className={`h-4 w-4 ${colors.icon}`} />
-              <CardTitle className="text-base font-semibold capitalize">
-                {suggestion.type} Suggestion
+              <CardTitle className="text-base font-semibold">
+                {getSuggestionCategoryDisplay(suggestion.type, suggestion.category)}
               </CardTitle>
             </div>
             <div className="flex items-center gap-2">
@@ -268,9 +193,6 @@ export function SuggestionPopover({
               </Button>
             </div>
           </div>
-          <CardDescription className="text-sm mt-2">
-            {suggestion.category}
-          </CardDescription>
         </CardHeader>
 
         <CardContent className="pt-0">
@@ -297,41 +219,7 @@ export function SuggestionPopover({
             </p>
           </div>
 
-          {/* Additional details */}
-          {showDetails && (
-            <div>
-              {suggestion.type === 'grammar' && getGrammarDetails(suggestion)}
-              {suggestion.type === 'style' && getStyleDetails(suggestion)}
-              {suggestion.type === 'readability' && getReadabilityDetails(suggestion)}
-              
-              {/* Confidence score */}
-              <div className="mt-3 pt-3 border-t border-neutral-200">
-                <p className="text-sm text-neutral-600">
-                  Confidence: {Math.round(suggestion.confidence * 100)}%
-                </p>
-              </div>
-            </div>
-          )}
 
-          {/* Toggle details button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowDetails(!showDetails)}
-            className="w-full mt-3 text-xs text-neutral-600 hover:text-neutral-800"
-          >
-            {showDetails ? (
-              <>
-                <ChevronUp className="h-3 w-3 mr-1" />
-                Hide Details
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-3 w-3 mr-1" />
-                Show Details
-              </>
-            )}
-          </Button>
 
           {/* Action buttons */}
           <div className="flex gap-2 mt-4">

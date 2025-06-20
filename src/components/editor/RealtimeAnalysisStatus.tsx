@@ -89,64 +89,50 @@ export function RealtimeAnalysisStatus({
       case 'idle':
         return {
           icon: <PenTool className="h-4 w-4" />,
-          text: 'Ready to analyze',
-          color: 'text-slate-500',
-          bgColor: 'bg-gradient-to-r from-slate-50 to-slate-100',
-          borderColor: 'border-slate-200'
+          text: 'Text analysis is ready',
+          color: 'text-slate-500'
         };
       
       case 'pending':
         return {
           icon: <Clock className="h-4 w-4 animate-pulse" />,
           text: 'Analysis starting...',
-          color: 'text-amber-600',
-          bgColor: 'bg-gradient-to-r from-amber-50 to-yellow-50',
-          borderColor: 'border-amber-200'
+          color: 'text-amber-600'
         };
       
       case 'analyzing':
         return {
           icon: <Sparkles className="h-4 w-4 animate-pulse" />,
           text: 'Analyzing text...',
-          color: 'text-blue-600',
-          bgColor: 'bg-gradient-to-r from-blue-50 to-indigo-50',
-          borderColor: 'border-blue-200'
+          color: 'text-blue-600'
         };
       
       case 'complete':
         return {
           icon: <CheckCircle2 className="h-4 w-4 animate-pulse" />,
           text: `Found ${suggestionsCount} suggestion${suggestionsCount !== 1 ? 's' : ''}`,
-          color: 'text-emerald-600',
-          bgColor: 'bg-gradient-to-r from-emerald-50 to-green-50',
-          borderColor: 'border-emerald-200'
+          color: 'text-emerald-600'
         };
       
       case 'error':
         return {
           icon: <AlertCircle className="h-4 w-4 animate-pulse" />,
           text: 'Analysis failed',
-          color: 'text-rose-600',
-          bgColor: 'bg-gradient-to-r from-rose-50 to-red-50',
-          borderColor: 'border-rose-200'
+          color: 'text-rose-600'
         };
       
       case 'cancelled':
         return {
           icon: <StopCircle className="h-4 w-4" />,
           text: 'Analysis cancelled',
-          color: 'text-gray-500',
-          bgColor: 'bg-gradient-to-r from-gray-50 to-slate-50',
-          borderColor: 'border-gray-200'
+          color: 'text-gray-500'
         };
       
       default:
         return {
           icon: <PenTool className="h-4 w-4" />,
-          text: 'Ready to analyze',
-          color: 'text-slate-500',
-          bgColor: 'bg-gradient-to-r from-slate-50 to-slate-100',
-          borderColor: 'border-slate-200'
+          text: 'Text analysis is ready',
+          color: 'text-slate-500'
         };
     }
   };
@@ -155,8 +141,9 @@ export function RealtimeAnalysisStatus({
 
   return (
     <div className={`
-      flex items-center justify-between px-4 py-3 rounded-xl border shadow-sm
-      ${statusDisplay.bgColor} ${statusDisplay.color} ${statusDisplay.borderColor}
+      flex items-center justify-between px-4 py-3
+      border border-gray-200 rounded-md
+      ${statusDisplay.color}
       transition-all duration-300 ease-in-out
     `}>
       {/* Status indicator */}
@@ -176,7 +163,7 @@ export function RealtimeAnalysisStatus({
         {/* Cache indicator */}
         {status === 'complete' && cacheHit && (
           <span 
-            className="text-xs px-2 py-1 bg-white/80 rounded-full opacity-90 flex items-center gap-1 border border-white/50 shadow-sm backdrop-blur-sm"
+            className="text-xs opacity-75 flex items-center gap-1"
             title="Result from cache"
           >
             <Database className="h-3 w-3 text-blue-500" />
@@ -201,7 +188,7 @@ export function RealtimeAnalysisStatus({
           {onRetry && (
             <button
               onClick={onRetry}
-              className="text-xs px-3 py-1.5 bg-white rounded-lg transition-all duration-200 flex items-center gap-1.5 shadow-sm border border-gray-200"
+              className="text-xs px-2 py-1 text-rose-600 hover:text-rose-700 transition-colors flex items-center gap-1.5"
               aria-label="Retry analysis"
             >
               <RotateCcw className="h-3 w-3" />
@@ -215,7 +202,7 @@ export function RealtimeAnalysisStatus({
       {(status === 'pending' || status === 'analyzing') && onCancel && (
         <button
           onClick={onCancel}
-          className="text-xs px-3 py-1.5 bg-white rounded-lg transition-all duration-200 flex items-center gap-1.5 shadow-sm border border-gray-200"
+          className="text-xs px-2 py-1 text-gray-600 hover:text-gray-700 transition-colors flex items-center gap-1.5"
           aria-label="Cancel analysis"
         >
           <StopCircle className="h-3 w-3" />

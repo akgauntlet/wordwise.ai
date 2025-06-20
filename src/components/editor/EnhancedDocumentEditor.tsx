@@ -19,6 +19,7 @@ import { SuggestionSidebar } from './SuggestionSidebar';
 import { SuggestionPopover } from './SuggestionPopover';
 import { RealtimeAnalysisStatus } from './RealtimeAnalysisStatus';
 import { useEditorWithSuggestions } from '@/hooks/editor';
+import { calculateSmartPopoverPosition } from '@/utils/popoverPositioning';
 import type { TiptapContent } from '@/types/document';
 import type { WritingSuggestion } from './SuggestionExtension';
 
@@ -53,19 +54,19 @@ interface EnhancedDocumentEditorProps {
  */
 function AutoSaveStatus({ saveStatus }: { saveStatus: 'saved' | 'auto-saved' | 'saving' | 'pending' | 'error' }) {
   const statusConfig = {
-    saved: { text: 'Saved', color: 'text-green-600', icon: null },
-    'auto-saved': { text: 'Auto-saved', color: 'text-green-600', icon: null },
-    saving: { text: 'Saving...', color: 'text-lime-600', icon: <Loader2 className="h-3 w-3 animate-spin" /> },
-    pending: { text: 'Unsaved changes', color: 'text-yellow-600', icon: null },
-    error: { text: 'Save failed', color: 'text-red-600', icon: <AlertCircle className="h-3 w-3" /> }
+    saved: { text: 'Saved', color: 'text-blue-600', icon: null },
+    'auto-saved': { text: 'Auto-saved', color: 'text-blue-600', icon: null },
+    saving: { text: 'Saving...', color: 'text-blue-400', icon: <Loader2 className="h-4 w-4 animate-spin" /> },
+    pending: { text: 'Unsaved changes', color: 'text-black', icon: null },
+    error: { text: 'Save failed', color: 'text-red-600', icon: <AlertCircle className="h-4 w-4" /> }
   };
 
   const config = statusConfig[saveStatus];
 
   return (
-    <div className={`flex items-center gap-1 text-xs ${config.color}`}>
+    <div className={`flex items-center gap-2 text-sm font-normal ${config.color}`}>
       {config.icon}
-      <span>{config.text}</span>
+      <span className={saveStatus === 'pending' ? 'italic' : ''}>{config.text}</span>
     </div>
   );
 }
@@ -121,13 +122,21 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
   }, [onContentChange]);
 
   /**
-   * Handle suggestion click - show popover at click position
+   * Handle suggestion click - show popover at click position with smart positioning
    */
   const handleSuggestionClick = useCallback((suggestion: WritingSuggestion) => {
     // Get mouse position for popover placement
     const event = window.event as MouseEvent;
     if (event) {
-      setPopoverPosition({ x: event.clientX, y: event.clientY });
+      // Use smart positioning to prevent screen edge overlap
+      const smartPosition = calculateSmartPopoverPosition(
+        event.clientX,
+        event.clientY,
+        320, // Popover width (w-80)
+        400, // Estimated popover height
+        16   // Margin from screen edges
+      );
+      setPopoverPosition(smartPosition);
     }
     setSelectedSuggestion(suggestion);
   }, []);
@@ -224,19 +233,39 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
       {/* Main Editor Area */}
       <div className={`h-full space-y-4 ${showSuggestionSidebar && !readOnly ? 'pr-80' : ''} ${className}`}>
         {/* Header with title and auto-save status */}
-        <div className="flex items-center justify-between">
-          <div>
-            <EditableTitle
-              title={title}
-              onTitleChange={onTitleChange || (() => {})}
-              readOnly={readOnly}
-            />
-            <div className="flex items-center gap-4 mt-1">
+        <div className="space-y-2">
+          {/* Title row with save status and button */}
+          <div className="flex items-center justify-between">
+            <div className="flex-1 max-w-[60%] min-w-0">
+              <EditableTitle
+                title={title}
+                onTitleChange={onTitleChange || (() => {})}
+                readOnly={readOnly}
+                className="truncate"
+              />
+            </div>
+            
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <AutoSaveStatus saveStatus={saveStatus} />
+              {onAutoSave && (
+                <Button {...saveButtonProps}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save
+                </Button>
+              )}
+            </div>
+          </div>
+          
+          {/* Stats row */}
+          <div className="flex items-center">
+            <div className="flex-1">
               <EditorStats 
                 editor={editor} 
                 targetWords={targetWords}
                 className="text-sm" 
               />
+            </div>
+            <div className="flex-1 flex justify-center">
               {!readOnly && (
                 <RealtimeAnalysisStatus 
                   status={analysisStatus}
@@ -244,20 +273,7 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
                 />
               )}
             </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <AutoSaveStatus saveStatus={saveStatus} />
-            {onAutoSave && (
-              <Button {...saveButtonProps}>
-                {saveStatus === 'saving' ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Save
-              </Button>
-            )}
+            <div className="flex-1"></div>
           </div>
         </div>
 
@@ -294,7 +310,6 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
         <SuggestionSidebar
           suggestions={suggestions}
           isAnalyzing={analysisStatus === 'analyzing'}
-          onSuggestionClick={handleSuggestionClick}
           onAcceptSuggestion={acceptSuggestion}
           onRejectSuggestion={rejectSuggestion}
           onAcceptAllType={acceptAllSuggestionsOfType}

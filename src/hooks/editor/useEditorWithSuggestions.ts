@@ -223,6 +223,15 @@ export function useEditorWithSuggestions({
   }, [analysisResult, editor]);
 
   /**
+   * Sync hook suggestions state to editor extension
+   */
+  useEffect(() => {
+    if (editor && suggestions) {
+      editor.commands.updateSuggestions(suggestions);
+    }
+  }, [editor, suggestions]);
+
+  /**
    * Periodically clean up invalid suggestions
    */
   useEffect(() => {
@@ -241,18 +250,22 @@ export function useEditorWithSuggestions({
     if (!editor) return;
     
     // Apply the suggestion using the editor command
-    editor.commands.applySuggestion(suggestion);
+    const success = editor.commands.applySuggestion(suggestion);
     
-    // Update local suggestions state
-    setSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
-    
-    // Clear selected suggestion if it was the accepted one
-    if (selectedSuggestion?.id === suggestion.id) {
-      setSelectedSuggestion(null);
+    if (success) {
+      // Update local suggestions state only if the application was successful
+      setSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
+      
+      // Clear selected suggestion if it was the accepted one
+      if (selectedSuggestion?.id === suggestion.id) {
+        setSelectedSuggestion(null);
+      }
+      
+      // TODO: Track acceptance in Firebase for analytics
+      console.log('Suggestion accepted:', suggestion.id);
+    } else {
+      console.warn('Failed to apply suggestion:', suggestion.id);
     }
-    
-    // TODO: Track acceptance in Firebase for analytics
-    console.log('Suggestion accepted:', suggestion.id);
   }, [editor, selectedSuggestion]);
 
   /**
@@ -262,18 +275,22 @@ export function useEditorWithSuggestions({
     if (!editor) return;
     
     // Remove the suggestion using the editor command
-    editor.commands.rejectSuggestion(suggestion);
+    const success = editor.commands.rejectSuggestion(suggestion);
     
-    // Update local suggestions state
-    setSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
-    
-    // Clear selected suggestion if it was the rejected one
-    if (selectedSuggestion?.id === suggestion.id) {
-      setSelectedSuggestion(null);
+    if (success) {
+      // Update local suggestions state only if the rejection was successful
+      setSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
+      
+      // Clear selected suggestion if it was the rejected one
+      if (selectedSuggestion?.id === suggestion.id) {
+        setSelectedSuggestion(null);
+      }
+      
+      // TODO: Track rejection in Firebase for analytics
+      console.log('Suggestion rejected:', suggestion.id);
+    } else {
+      console.warn('Failed to reject suggestion:', suggestion.id);
     }
-    
-    // TODO: Track rejection in Firebase for analytics
-    console.log('Suggestion rejected:', suggestion.id);
   }, [editor, selectedSuggestion]);
 
   /**
@@ -283,22 +300,28 @@ export function useEditorWithSuggestions({
     if (!editor) return;
     
     const suggestionsOfType = suggestions.filter(s => s.type === type);
+    let successCount = 0;
     
     // Apply all suggestions of this type
     suggestionsOfType.forEach(suggestion => {
-      editor.commands.applySuggestion(suggestion);
+      const success = editor.commands.applySuggestion(suggestion);
+      if (success) {
+        successCount++;
+      }
     });
     
-    // Update local suggestions state
-    setSuggestions(prev => prev.filter(s => s.type !== type));
-    
-    // Clear selected suggestion if it was of this type
-    if (selectedSuggestion?.type === type) {
-      setSelectedSuggestion(null);
+    if (successCount > 0) {
+      // Update local suggestions state
+      setSuggestions(prev => prev.filter(s => s.type !== type));
+      
+      // Clear selected suggestion if it was of this type
+      if (selectedSuggestion?.type === type) {
+        setSelectedSuggestion(null);
+      }
+      
+      // TODO: Track bulk acceptance in Firebase for analytics
+      console.log(`${successCount} of ${suggestionsOfType.length} ${type} suggestions accepted`);
     }
-    
-    // TODO: Track bulk acceptance in Firebase for analytics
-    console.log(`All ${type} suggestions accepted:`, suggestionsOfType.length);
   }, [editor, suggestions, selectedSuggestion]);
 
   /**
@@ -308,22 +331,28 @@ export function useEditorWithSuggestions({
     if (!editor) return;
     
     const suggestionsOfType = suggestions.filter(s => s.type === type);
+    let successCount = 0;
     
     // Remove all suggestions of this type
     suggestionsOfType.forEach(suggestion => {
-      editor.commands.rejectSuggestion(suggestion);
+      const success = editor.commands.rejectSuggestion(suggestion);
+      if (success) {
+        successCount++;
+      }
     });
     
-    // Update local suggestions state
-    setSuggestions(prev => prev.filter(s => s.type !== type));
-    
-    // Clear selected suggestion if it was of this type
-    if (selectedSuggestion?.type === type) {
-      setSelectedSuggestion(null);
+    if (successCount > 0) {
+      // Update local suggestions state
+      setSuggestions(prev => prev.filter(s => s.type !== type));
+      
+      // Clear selected suggestion if it was of this type
+      if (selectedSuggestion?.type === type) {
+        setSelectedSuggestion(null);
+      }
+      
+      // TODO: Track bulk rejection in Firebase for analytics
+      console.log(`${successCount} of ${suggestionsOfType.length} ${type} suggestions rejected`);
     }
-    
-    // TODO: Track bulk rejection in Firebase for analytics
-    console.log(`All ${type} suggestions rejected:`, suggestionsOfType.length);
   }, [editor, suggestions, selectedSuggestion]);
 
   /**
