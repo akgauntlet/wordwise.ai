@@ -14,5 +14,6 @@ export { SuggestionPopover } from './SuggestionPopover';
 export { SuggestionSidebar } from './SuggestionSidebar';
 export { RealtimeAnalysisStatus } from './RealtimeAnalysisStatus';
 export { SuggestionDemo } from './SuggestionDemo';
+export { IndentExtension } from './IndentExtension';
 
 export type { WritingSuggestion } from './SuggestionExtension'; 

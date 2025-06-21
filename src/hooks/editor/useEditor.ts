@@ -12,6 +12,7 @@ import { Link } from '@tiptap/extension-link';
 import { Underline } from '@tiptap/extension-underline';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { CharacterCount } from '@tiptap/extension-character-count';
+import { IndentExtension } from '@/components/editor/IndentExtension';
 import type { TiptapContent } from '@/types/document';
 
 /**
@@ -81,6 +82,14 @@ export function useEditor({
       }),
       
       CharacterCount,
+      
+      // Indent extension for Tab key handling
+      IndentExtension.configure({
+        types: ['heading', 'paragraph'],
+        defaultIndentLevel: 0,
+        indentStep: 30,
+        maxIndentLevel: 8,
+      }),
     ],
     
     content,

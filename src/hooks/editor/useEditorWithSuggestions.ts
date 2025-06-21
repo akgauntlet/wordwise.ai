@@ -14,6 +14,7 @@ import { Underline } from '@tiptap/extension-underline';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { CharacterCount } from '@tiptap/extension-character-count';
 import { SuggestionExtension, type WritingSuggestion } from '@/components/editor/SuggestionExtension';
+import { IndentExtension } from '@/components/editor/IndentExtension';
 import { useRealtimeAnalysis } from './useRealtimeAnalysis';
 import type { TiptapContent } from '@/types/document';
 
@@ -134,6 +135,14 @@ export function useEditorWithSuggestions({
       }),
       
       CharacterCount,
+      
+      // Indent extension for Tab key handling
+      IndentExtension.configure({
+        types: ['heading', 'paragraph'],
+        defaultIndentLevel: 0,
+        indentStep: 30,
+        maxIndentLevel: 8,
+      }),
       
       // Suggestion extension
       SuggestionExtension.configure({

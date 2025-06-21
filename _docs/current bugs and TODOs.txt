@@ -8,3 +8,6 @@ version card should have a button that just opens the version in the editor  wit
 
 
 api response takes way too long (standard?)
+
+
+analysis kickoff condition is unclear and also not reliable
