@@ -1,7 +1,10 @@
 the ui does not immediately respond to closing the google signin popup (might be CORS-related?)
 
-when logging in with wrong credentials, should return a message saying something along the lines instead of "an unexpected error occurred"
+when logging in with wrong credentials, should return a message saying something informative instead of "an unexpected error occurred"
 
-versions page browser console error around html cant be child of div
+
 
 version card should have a button that just opens the version in the editor  without creating a new document/version in the database
+
+
+api response takes way too long (standard?)

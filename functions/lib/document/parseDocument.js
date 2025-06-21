@@ -64,11 +64,12 @@ async function parseFileContent(buffer, mimeType) {
 }
 /**
  * Convert plain text to basic Tiptap content structure
+ * Preserves line breaks and indentation for proper formatting
  */
 function textToTiptapContent(text) {
-    // Split text into paragraphs and create Tiptap content
-    const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
-    if (paragraphs.length === 0) {
+    // Split text into individual lines to preserve line breaks and indentation
+    const lines = text.split(/\r?\n/);
+    if (lines.length === 0 || lines.every(line => line.trim().length === 0)) {
         return {
             type: 'doc',
             content: [
@@ -79,17 +80,34 @@ function textToTiptapContent(text) {
             ]
         };
     }
-    return {
-        type: 'doc',
-        content: paragraphs.map(paragraph => ({
+    // Convert each line to a paragraph, preserving whitespace
+    const content = lines.map(line => {
+        // Handle empty lines as empty paragraphs
+        if (line.trim().length === 0) {
+            return {
+                type: 'paragraph',
+                content: []
+            };
+        }
+        // For non-empty lines, preserve leading whitespace by converting tabs/spaces to text
+        // Replace tabs with appropriate spacing for better display
+        const processedLine = line.replace(/^\t+/, (tabs) => {
+            // Convert each tab to 4 spaces for consistent display
+            return '    '.repeat(tabs.length);
+        });
+        return {
             type: 'paragraph',
-            content: paragraph.trim() ? [
+            content: [
                 {
                     type: 'text',
-                    text: paragraph.trim()
+                    text: processedLine
                 }
-            ] : []
-        }))
+            ]
+        };
+    });
+    return {
+        type: 'doc',
+        content
     };
 }
 /**
