@@ -10,7 +10,6 @@
  * 
  * Usage:
  * - Content hashing for cache keys
- * - Sentence-level change detection
  * - Client-side result caching
  * - Cache cleanup and management
  * 
@@ -21,8 +20,7 @@
 import type { 
   RealtimeAnalysisResult, 
   CachedAnalysisResult, 
-  AnalysisOptions,
-  ContentChangeResult 
+  AnalysisOptions
 } from '@/types/realtimeAnalysis';
 
 /**
@@ -75,92 +73,7 @@ export function generateContentHash(content: string, options: AnalysisOptions): 
   return Math.abs(hash).toString(36);
 }
 
-/**
- * Detect sentence-level changes between two text versions
- * 
- * @param previousText - Previous version of the text
- * @param currentText - Current version of the text
- * @returns Change detection result with details
- */
-export function detectSentenceChanges(
-  previousText: string, 
-  currentText: string
-): boolean {
-  // Quick check for identical content
-  if (previousText === currentText) {
-    return false;
-  }
-  
-  // Split into sentences using multiple delimiters
-  const previousSentences = splitIntoSentences(previousText);
-  const currentSentences = splitIntoSentences(currentText);
-  
-  // If sentence count changed significantly, consider it a change
-  const sentenceCountDiff = Math.abs(previousSentences.length - currentSentences.length);
-  if (sentenceCountDiff > 0) {
-    return true;
-  }
-  
-  // Check for sentence-level changes
-  const maxLength = Math.max(previousSentences.length, currentSentences.length);
-  let changedSentences = 0;
-  
-  for (let i = 0; i < maxLength; i++) {
-    const prevSentence = previousSentences[i] || '';
-    const currSentence = currentSentences[i] || '';
-    
-    // Normalize sentences for comparison (remove extra whitespace, case)
-    const normalizedPrev = normalizeSentence(prevSentence);
-    const normalizedCurr = normalizeSentence(currSentence);
-    
-    if (normalizedPrev !== normalizedCurr) {
-      changedSentences++;
-    }
-  }
-  
-  // Consider it a significant change if more than 10% of sentences changed
-  const changePercentage = maxLength > 0 ? (changedSentences / maxLength) * 100 : 0;
-  return changePercentage > 10;
-}
 
-/**
- * Get detailed change analysis between two text versions
- * 
- * @param previousText - Previous version of the text
- * @param currentText - Current version of the text
- * @returns Detailed change analysis result
- */
-export function getDetailedChangeAnalysis(
-  previousText: string, 
-  currentText: string
-): ContentChangeResult {
-  const previousSentences = splitIntoSentences(previousText);
-  const currentSentences = splitIntoSentences(currentText);
-  
-  let changedSentences = 0;
-  const maxLength = Math.max(previousSentences.length, currentSentences.length);
-  
-  for (let i = 0; i < maxLength; i++) {
-    const prevSentence = previousSentences[i] || '';
-    const currSentence = currentSentences[i] || '';
-    
-    if (normalizeSentence(prevSentence) !== normalizeSentence(currSentence)) {
-      changedSentences++;
-    }
-  }
-  
-  const addedSentences = Math.max(0, currentSentences.length - previousSentences.length);
-  const removedSentences = Math.max(0, previousSentences.length - currentSentences.length);
-  const changePercentage = maxLength > 0 ? (changedSentences / maxLength) * 100 : 0;
-  
-  return {
-    hasChanges: changedSentences > 0,
-    changedSentences,
-    addedSentences,
-    removedSentences,
-    changePercentage
-  };
-}
 
 /**
  * Retrieve cached analysis result
@@ -338,32 +251,7 @@ export function getCacheStats(): {
   }
 }
 
-/**
- * Split text into sentences using multiple delimiters
- */
-function splitIntoSentences(text: string): string[] {
-  if (!text || typeof text !== 'string') {
-    return [];
-  }
-  
-  // Split on sentence endings, keeping the delimiter
-  const sentences = text
-    .split(/(?<=[.!?])\s+/)
-    .map(sentence => sentence.trim())
-    .filter(sentence => sentence.length > 0);
-  
-  return sentences;
-}
 
-/**
- * Normalize sentence for comparison
- */
-function normalizeSentence(sentence: string): string {
-  return sentence
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 /**
  * Get cache metadata

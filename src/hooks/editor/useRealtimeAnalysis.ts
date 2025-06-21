@@ -12,7 +12,6 @@
  * Usage:
  * - Provides debounced real-time analysis with 2-second delay
  * - Implements client-side caching with content-hash
- * - Handles sentence-level change detection
  * - Manages analysis queue and request cancellation
  * 
  * PERFORMANCE: Optimized for minimal API calls and fast responses
@@ -30,7 +29,6 @@ import type {
 } from '@/types/realtimeAnalysis';
 import { 
   generateContentHash,
-  detectSentenceChanges,
   getFromCache,
   setToCache,
   clearExpiredCache
@@ -67,8 +65,6 @@ interface RealtimeAnalysisState {
 interface UseRealtimeAnalysisConfig {
   /** Debounce delay in milliseconds (default: 2000) */
   debounceDelay?: number;
-  /** Enable sentence-level change detection (default: true) */
-  enableChangeDetection?: boolean;
   /** Enable client-side caching (default: true) */
   enableCaching?: boolean;
   /** Cache TTL in hours (default: 24) */
@@ -82,7 +78,6 @@ interface UseRealtimeAnalysisConfig {
  */
 const DEFAULT_CONFIG: Required<Omit<UseRealtimeAnalysisConfig, 'analysisOptions'>> = {
   debounceDelay: 2000,
-  enableChangeDetection: true,
   enableCaching: true,
   cacheTtlHours: 24
 };
@@ -311,9 +306,8 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
    * Trigger text analysis with intelligent debouncing
    * 
    * @param content - Text content to analyze
-   * @param force - Force analysis even if content hasn't changed significantly
    */
-  const analyzeText = useCallback((content: string, force: boolean = false) => {
+  const analyzeText = useCallback((content: string) => {
     // Validate input
     if (!content || typeof content !== 'string') {
       updateStatus('idle', { result: null, error: null });
@@ -335,18 +329,7 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
     // Generate content hash
     const contentHash = generateContentHash(content, fullConfig.analysisOptions);
     
-    // Check if content has changed significantly (sentence-level)
-    if (!force && fullConfig.enableChangeDetection && state.lastAnalyzedContent) {
-      const hasSignificantChanges = detectSentenceChanges(
-        state.lastAnalyzedContent,
-        content
-      );
-      
-      if (!hasSignificantChanges && state.status === 'complete') {
-        // No significant changes, skipping analysis
-        return;
-      }
-    }
+
     
     // Clear any existing timers and requests
     clearDebounceTimer();
@@ -365,8 +348,6 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
     
   }, [
     fullConfig,
-    state.lastAnalyzedContent,
-    state.status,
     updateStatus,
     clearDebounceTimer,
     cancelCurrentRequest,

@@ -127,7 +127,6 @@ export interface CachedAnalysisResult extends RealtimeAnalysisResult {
  */
 export interface RealtimeAnalysisConfig {
   debounceDelay: number;
-  enableChangeDetection: boolean;
   enableCaching: boolean;
   cacheTtlHours: number;
   analysisOptions: AnalysisOptions;
@@ -145,13 +144,4 @@ export interface AnalysisStatistics {
   hasError: boolean;
 }
 
-/**
- * Content change detection result
- */
-export interface ContentChangeResult {
-  hasChanges: boolean;
-  changedSentences: number;
-  addedSentences: number;
-  removedSentences: number;
-  changePercentage: number;
-} 
+ 
