@@ -64,7 +64,7 @@ function DashboardPageContent() {
         {/* Main Content */}
         <main>
           {/* Quick Actions */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-semibold mb-6">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="cursor-pointer hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out" onClick={handleCreateDocument}>
@@ -131,7 +131,7 @@ function DashboardPageContent() {
           </div>
 
           {/* Document Management */}
-          <div className="mb-16">
+          <div className="mb-24">
             <DocumentList />
           </div>
 

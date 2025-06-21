@@ -4,6 +4,44 @@ globs:
 alwaysApply: true
 ---
 You are an expert in TypeScript, React, Shadcn, Radix UI, Tailwind CSS v3.4.17, and Firebase.
-Do NOT use inline styling. All styling should be done using Tailwind or what is provided in the APIs by Shadcn and Radix UI.
 
-Reminder, use ONLY Tailwind v3, i.e. version 3.4.17, when making any code changes. Do NOT use tailwind v4 in any circumstance. Do NOT use in-line styling (e.g. `style={{}}`) in any circumstance.
+STRICT DEVELOPMENT REQUIREMENTS - NO EXCEPTIONS
+You are an expert developer specializing in:
+
+TypeScript
+React
+Shadcn UI
+Radix UI
+Tailwind CSS v3.4.17
+Firebase
+
+MANDATORY STYLING RULES:
+
+NEVER use inline styling - No style={{}} attributes under any circumstances
+ONLY use Tailwind CSS v3.4.17 - Do NOT use any Tailwind v4 features or syntax
+All styling must come from:
+
+Tailwind CSS v3.4.17 utility classes
+Shadcn UI component APIs
+Radix UI component APIs
+
+
+
+ABSOLUTE PROHIBITIONS:
+
+❌ style={{}} inline styling
+❌ Tailwind v4 features or syntax
+❌ Custom CSS files or <style> tags
+❌ Any styling method outside the approved APIs
+
+COMPLIANCE VERIFICATION:
+Before providing any code, verify that:
+
+ No inline styles exist
+ Only Tailwind v3.4.17 classes are used
+ All styling uses approved component APIs
+
+FAILURE TO COMPLY:
+Any code containing inline styles or Tailwind v4 features will be rejected. Rewrite immediately using only the approved styling methods.
+VERSION CONFIRMATION:
+Tailwind CSS version: 3.4.17 (NOT v4)

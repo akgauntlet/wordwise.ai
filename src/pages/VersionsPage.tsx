@@ -16,15 +16,18 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageErrorBoundary } from '@/components/layout';
 import { useActiveDocument, useDocumentVersions, useDocument } from '@/hooks/document';
 import { setActiveDocument } from '@/lib/utils';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 import { 
   AlertCircle, 
   Clock, 
-  FileText, 
+  FileText,
   ExternalLink, 
   Loader2,
   ArrowLeft,
   Hash,
-  Calendar
+  Calendar,
+  Eye
 } from 'lucide-react';
 import type { DocumentVersion } from '@/types/document';
 
@@ -34,10 +37,11 @@ import type { DocumentVersion } from '@/types/document';
 interface VersionCardProps {
   version: DocumentVersion;
   onSaveAsNew: (version: DocumentVersion) => void;
+  onPreview: (version: DocumentVersion) => void;
   isLoading?: boolean;
 }
 
-function VersionCard({ version, onSaveAsNew, isLoading = false }: VersionCardProps) {
+function VersionCard({ version, onSaveAsNew, onPreview, isLoading = false }: VersionCardProps) {
   
   /**
    * Format date for display
@@ -91,15 +95,31 @@ function VersionCard({ version, onSaveAsNew, isLoading = false }: VersionCardPro
           <div className="flex items-center gap-2">
             <Button
               size="sm"
+              variant="outline"
+              onClick={() => onPreview(version)}
+              disabled={isLoading}
+              title="Quick preview"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </Button>
+            <Button
+              size="sm"
               variant="default"
               onClick={() => onSaveAsNew(version)}
               disabled={isLoading}
               title="Save as new document"
             >
               {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
               ) : (
-                <ExternalLink className="h-4 w-4" />
+                <>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Save as New Document
+                </>
               )}
             </Button>
           </div>
@@ -108,6 +128,128 @@ function VersionCard({ version, onSaveAsNew, isLoading = false }: VersionCardPro
       
 
     </Card>
+  );
+}
+
+/**
+ * Quick preview modal component
+ */
+interface QuickPreviewModalProps {
+  version: DocumentVersion | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function QuickPreviewModal({ version, isOpen, onClose }: QuickPreviewModalProps) {
+  /**
+   * Create read-only editor instance for preview
+   */
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: version?.content || null,
+    editable: false,
+    immediatelyRender: false,
+  }, [version?.content]);
+
+  /**
+   * Format date for display
+   */
+  const formatDate = (timestamp: { toDate?: () => Date } | Date | string) => {
+    let date: Date;
+    
+    if (typeof timestamp === 'object' && timestamp !== null && 'toDate' in timestamp) {
+      date = timestamp.toDate?.() || new Date();
+    } else if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      date = new Date();
+    }
+    
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
+  // Update editor content when version changes
+  useEffect(() => {
+    if (editor && version) {
+      editor.commands.setContent(version.content);
+    }
+  }, [editor, version]);
+
+  // Cleanup editor when modal closes
+  useEffect(() => {
+    return () => {
+      if (editor && !isOpen) {
+        editor.destroy();
+      }
+    };
+  }, [editor, isOpen]);
+
+  if (!isOpen || !version) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-4xl max-h-[80vh] flex flex-col">
+        <CardHeader className="flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">
+                Version {version.version} Preview
+              </CardTitle>
+              <CardDescription className="flex items-center gap-4 mt-1">
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  <span className="text-xs">
+                    {formatDate(version.createdAt)}
+                  </span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <Hash className="h-3 w-3" />
+                  <span className="text-xs">
+                    {version.wordCount} words
+                  </span>
+                </span>
+              </CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              ✕
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-auto">
+          <div className="max-h-[50vh] overflow-auto border rounded-lg bg-background">
+            {editor ? (
+              <div className="p-6">
+                <EditorContent 
+                  editor={editor} 
+                  className="prose prose-slate max-w-none focus:outline-none
+                    prose-headings:text-foreground 
+                    prose-p:text-foreground 
+                    prose-strong:text-foreground 
+                    prose-em:text-foreground
+                    prose-ul:text-foreground 
+                    prose-ol:text-foreground 
+                    prose-li:text-foreground
+                    prose-blockquote:text-muted-foreground 
+                    prose-blockquote:border-l-border
+                    prose-code:text-foreground 
+                    prose-code:bg-muted 
+                    prose-pre:text-foreground 
+                    prose-pre:bg-muted"
+                />
+              </div>
+            ) : (
+              <div className="p-6 text-muted-foreground">Loading content...</div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -203,6 +345,8 @@ function VersionsPageContent() {
 
   const [selectedVersion, setSelectedVersion] = useState<DocumentVersion | null>(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [previewVersion, setPreviewVersion] = useState<DocumentVersion | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   /**
    * Load versions when active document changes
@@ -221,6 +365,22 @@ function VersionsPageContent() {
   const handleSaveAsNew = (version: DocumentVersion) => {
     setSelectedVersion(version);
     setShowSaveDialog(true);
+  };
+
+  /**
+   * Handle preview version in modal
+   */
+  const handlePreview = (version: DocumentVersion) => {
+    setPreviewVersion(version);
+    setShowPreviewModal(true);
+  };
+
+  /**
+   * Handle close preview modal
+   */
+  const handleClosePreview = () => {
+    setShowPreviewModal(false);
+    setPreviewVersion(null);
   };
 
   /**
@@ -344,6 +504,7 @@ function VersionsPageContent() {
                   key={version.id}
                   version={version}
                   onSaveAsNew={handleSaveAsNew}
+                  onPreview={handlePreview}
                   isLoading={saving}
                 />
               ))}
@@ -358,6 +519,13 @@ function VersionsPageContent() {
           onClose={handleCloseSaveDialog}
           onSave={handleSaveConfirm}
           isLoading={saving}
+        />
+
+        {/* Quick Preview Modal */}
+        <QuickPreviewModal
+          version={previewVersion}
+          isOpen={showPreviewModal}
+          onClose={handleClosePreview}
         />
       </div>
     </div>

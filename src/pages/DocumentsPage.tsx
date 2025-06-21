@@ -178,7 +178,7 @@ function DocumentsPageContent() {
 
       {/* Search Bar */}
       {documents.length > 0 && (
-        <div className="relative">
+        <div className="relative mb-8">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search documents by title..."
@@ -203,6 +203,7 @@ function DocumentsPageContent() {
       )}
 
       {/* Documents grid */}
+      <div className="pt-4">
       {documents.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -251,6 +252,7 @@ function DocumentsPageContent() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

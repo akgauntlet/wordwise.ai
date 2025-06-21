@@ -104,18 +104,8 @@ export function DocumentList() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">Recent documents</h2>
-        </div>
-        
-        <Button 
-          onClick={handleCreateDocument}
-          disabled={!canCreateDocument || saving}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Document
-        </Button>
+      <div>
+        <h2 className="text-2xl font-semibold">Recent documents</h2>
       </div>
 
       {/* Error display */}
