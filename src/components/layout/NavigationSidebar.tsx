@@ -73,6 +73,8 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
     setIsSigningOut(true);
     try {
       await signOut();
+      // Navigate to app root after successful sign out
+      navigate('/');
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {

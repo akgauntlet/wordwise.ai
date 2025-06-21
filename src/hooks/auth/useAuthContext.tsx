@@ -12,6 +12,7 @@ import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import type { AuthState, AuthAction } from "@/types/auth";
 import { getUserProfile, createUserProfile } from "@/services/auth/profileService";
+import { clearActiveDocument } from "@/lib/utils/sessionStorage";
 import { AuthContext, type AuthContextType } from "./authContext";
 
 /**
@@ -149,6 +150,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       dispatch({ type: "AUTH_LOADING" });
       await auth.signOut();
+      // Clear active document when user signs out
+      clearActiveDocument();
       dispatch({ type: "AUTH_LOGOUT" });
     } catch (error) {
       console.error("Sign out error:", error);
@@ -196,7 +199,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Handle authentication state changes
    */
   useEffect(() => {
+    let previousUserId: string | null = null;
+    
     const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
+      // Clear active document when user changes (sign out, sign in, or user switch)
+      if (previousUserId !== (user?.uid || null)) {
+        clearActiveDocument();
+        previousUserId = user?.uid || null;
+      }
+      
       if (user) {
         try {
           // Wait for auth token to be properly available
