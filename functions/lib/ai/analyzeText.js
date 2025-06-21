@@ -17,6 +17,7 @@
  *
  * SECURITY: API keys are protected in Firebase Functions environment
  * RATE LIMITING: 100 requests per user per hour, 1M characters per hour
+ * OPTIMIZED: Reduced Firestore operations for better performance
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.analyzeText = void 0;
@@ -65,20 +66,19 @@ exports.analyzeText = (0, https_1.onCall)({
     let userId;
     let content;
     let options;
-    let documentId;
     try {
         // Validate authentication
         if (!request.auth) {
             throw new https_1.HttpsError('unauthenticated', 'Authentication required for text analysis');
         }
         userId = request.auth.uid;
-        ({ content, options, documentId } = request.data);
+        ({ content, options } = request.data);
         console.log(`[${requestId}] Processing request for user: ${userId}`);
         console.log(`[${requestId}] Content length: ${content.length} characters`);
         // Validate request data
         (0, openai_1.validateAnalysisRequest)(content, options);
-        // Check rate limits
-        await (0, rateLimiting_1.checkRateLimit)(userId, content.length);
+        // Check rate limits (immediate write for full analysis)
+        await (0, rateLimiting_1.checkRateLimit)(userId, content.length, false);
         // Calculate content hash for caching
         const contentHash = (0, openai_1.calculateContentHash)(content, options);
         // Check cache first
@@ -99,13 +99,13 @@ exports.analyzeText = (0, https_1.onCall)({
         console.log(`[${requestId}] Sending request to OpenAI`);
         // Call OpenAI API
         const completion = await openai.chat.completions.create({
-            model: 'gpt-4o', // High-quality model for enhanced text analysis
+            model: 'gpt-3.5-turbo', // Fast and cost-effective model for text analysis
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userPrompt }
             ],
-            temperature: 0.3, // Lower temperature for more consistent analysis
-            max_tokens: 4000 // Sufficient for detailed suggestions
+            temperature: 0.2, // Lower temperature for faster, more consistent analysis
+            max_tokens: 2000 // Reduced tokens for faster processing with simplified prompts
         });
         const aiResponse = (_b = (_a = completion.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content;
         if (!aiResponse) {
@@ -129,10 +129,10 @@ exports.analyzeText = (0, https_1.onCall)({
             options,
             processingTimeMs: Date.now() - startTime
         };
-        // Cache the result for future requests
-        await cacheAnalysisResult(contentHash, analysisResult, userId);
-        // Store analysis metadata for analytics
-        await storeAnalysisMetadata(userId, analysisResult, documentId);
+        // Cache the result for future requests (only if analysis was successful)
+        if (analysisResult.totalSuggestions > 0 || content.length > 500) {
+            await cacheAnalysisResult(contentHash, analysisResult, userId);
+        }
         console.log(`[${requestId}] Analysis completed successfully in ${analysisResult.processingTimeMs}ms`);
         console.log(`[${requestId}] Found ${analysisResult.totalSuggestions} total suggestions`);
         return {
@@ -183,7 +183,7 @@ function generateRequestId() {
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 /**
- * Check if we have a cached analysis result for this content
+ * Check if we have a cached analysis result for this content (optimized)
  *
  * @param contentHash - Hash of the content and options
  * @param userId - User ID for cache isolation
@@ -202,8 +202,8 @@ async function getCachedAnalysis(contentHash, userId) {
         const cacheAge = Date.now() - cachedData.timestamp.toMillis();
         const cacheValidityMs = 24 * 60 * 60 * 1000; // 24 hours
         if (cacheAge > cacheValidityMs) {
-            // Cache expired, delete it
-            await cacheRef.delete();
+            // Don't delete expired cache immediately to avoid extra operations
+            // Let it be cleaned up by background processes
             return null;
         }
         // Convert Firestore timestamp back to Date
@@ -215,7 +215,7 @@ async function getCachedAnalysis(contentHash, userId) {
     }
 }
 /**
- * Cache the analysis result for future requests
+ * Cache the analysis result for future requests (optimized)
  *
  * @param contentHash - Hash of the content and options
  * @param result - Analysis result to cache
@@ -225,40 +225,12 @@ async function cacheAnalysisResult(contentHash, result, userId) {
     try {
         const db = (0, firestore_1.getFirestore)();
         const cacheRef = db.collection('analysisCache').doc(`${userId}_${contentHash}`);
-        await cacheRef.set(Object.assign(Object.assign({}, result), { cachedAt: new Date() }));
+        // Use merge to avoid overwriting if another process already cached this
+        await cacheRef.set(Object.assign(Object.assign({}, result), { cachedAt: new Date() }), { merge: true });
     }
     catch (error) {
         console.error('Error caching analysis result:', error);
         // Don't fail the request if caching fails
-    }
-}
-/**
- * Store analysis metadata for analytics and monitoring
- *
- * @param userId - User ID
- * @param result - Analysis result
- * @param documentId - Optional document ID
- */
-async function storeAnalysisMetadata(userId, result, documentId) {
-    try {
-        const db = (0, firestore_1.getFirestore)();
-        const metadataRef = db.collection('analysisMetadata').doc(result.analysisId);
-        await metadataRef.set({
-            userId,
-            documentId: documentId || null,
-            timestamp: result.timestamp,
-            processingTimeMs: result.processingTimeMs,
-            totalSuggestions: result.totalSuggestions,
-            grammarCount: result.grammarSuggestions.length,
-            styleCount: result.styleSuggestions.length,
-            readabilityCount: result.readabilitySuggestions.length,
-            contentLength: result.contentHash.length, // Approximate based on hash
-            options: result.options
-        });
-    }
-    catch (error) {
-        console.error('Error storing analysis metadata:', error);
-        // Don't fail the request if metadata storage fails
     }
 }
 //# sourceMappingURL=analyzeText.js.map

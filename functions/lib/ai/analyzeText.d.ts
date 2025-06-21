@@ -16,6 +16,7 @@
  *
  * SECURITY: API keys are protected in Firebase Functions environment
  * RATE LIMITING: 100 requests per user per hour, 1M characters per hour
+ * OPTIMIZED: Reduced Firestore operations for better performance
  */
 import { AIAnalysisResult, AIAnalysisError } from '../types/ai';
 /**

@@ -22,6 +22,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.analyzeTextRealtime = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const openai_1 = require("../utils/openai");
+const promptTemplates_1 = require("../utils/promptTemplates");
 const rateLimiting_1 = require("../utils/rateLimiting");
 const responseValidation_1 = require("../utils/responseValidation");
 /**
@@ -73,26 +74,26 @@ exports.analyzeTextRealtime = (0, https_1.onCall)({
         console.log(`[RT-${requestId}] Content length: ${content.length} characters`);
         // Validate request data with more lenient limits for real-time
         validateRealtimeRequest(content, options);
-        // Check rate limits (shared with main analysis)
-        await (0, rateLimiting_1.checkRateLimit)(userId, content.length);
+        // Check rate limits (optimized for real-time with batched writes)
+        await (0, rateLimiting_1.checkRateLimit)(userId, content.length, true);
         // Calculate or use provided content hash
         const finalContentHash = contentHash || (0, openai_1.calculateContentHash)(content, options);
         // Initialize OpenAI client
         const openai = (0, openai_1.initializeOpenAI)();
         // Generate lightweight prompts
-        const systemPrompt = generateLightweightSystemPrompt(options);
-        const userPrompt = generateLightweightUserPrompt(content);
+        const systemPrompt = (0, promptTemplates_1.generateLightweightSystemPrompt)(options);
+        const userPrompt = (0, promptTemplates_1.generateLightweightUserPrompt)(content);
         console.log(`[RT-${requestId}] Sending lightweight request to OpenAI`);
-        console.log(`[RT-${requestId}] Request details: model=gpt-4o, content_length=${content.length}`);
+        console.log(`[RT-${requestId}] Request details: model=gpt-3.5-turbo, content_length=${content.length}`);
         // Call OpenAI API with optimized parameters for speed
         const completion = await openai.chat.completions.create({
-            model: 'gpt-4o', // High-quality model for enhanced analysis
+            model: 'gpt-3.5-turbo', // Fast and cost-effective model for analysis
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userPrompt }
             ],
-            temperature: 0.2, // Lower temperature for consistent, faster responses
-            max_tokens: 2000 // Reduced token limit for speed
+            temperature: 0.1, // Very low temperature for maximum speed
+            max_tokens: 1000 // Further reduced for lightweight real-time analysis
         });
         const aiResponse = (_b = (_a = completion.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content;
         if (!aiResponse) {
@@ -182,74 +183,5 @@ function validateRealtimeRequest(content, options) {
         throw new https_1.HttpsError('invalid-argument', 'Analysis options are required');
     }
 }
-/**
- * Generate lightweight system prompt optimized for speed
- *
- * @param options - Analysis options
- * @returns Lightweight system prompt
- */
-function generateLightweightSystemPrompt(options) {
-    let prompt = `You are a helpful writing assistant optimized for real-time analysis. Provide concise, actionable suggestions.
-
-RESPONSE FORMAT: Return valid JSON only, no markdown formatting.
-
-{
-  "grammarSuggestions": [...],
-  "styleSuggestions": [...],
-  "readabilitySuggestions": [...],
-  "readabilityMetrics": {
-    "fleschScore": 50,
-    "gradeLevel": 12,
-    "avgSentenceLength": 15,
-    "avgSyllablesPerWord": 1.5,
-    "wordCount": 0,
-    "sentenceCount": 0,
-    "complexWordsPercent": 15
-  }
-}
-
-SUGGESTION FORMAT:
-{
-  "id": "unique_id",
-  "type": "grammar|style|readability",
-  "severity": "low|medium|high",
-  "startOffset": 0,
-  "endOffset": 5,
-  "originalText": "original text",
-  "suggestedText": "suggested text",
-  "explanation": "Brief explanation",
-  "category": "category_name",
-  "confidence": 0.8
-}
-
-GUIDELINES:
-- Focus on the most important issues first
-- Provide brief, clear explanations
-- Limit suggestions to top 10 per category for speed
-- Prioritize grammar over style for real-time analysis`;
-    // Add specific analysis types based on options
-    if (options.includeGrammar) {
-        prompt += '\n- Include grammar and spelling corrections';
-    }
-    if (options.includeStyle) {
-        prompt += '\n- Include basic style improvements for clarity';
-    }
-    if (options.includeReadability) {
-        prompt += '\n- Include essential readability suggestions';
-    }
-    return prompt;
-}
-/**
- * Generate lightweight user prompt
- *
- * @param content - Text content to analyze
- * @returns Lightweight user prompt
- */
-function generateLightweightUserPrompt(content) {
-    return `Analyze this text for real-time feedback. Focus on the most important issues:
-
-"${content}"
-
-Provide top suggestions in JSON format.`;
-}
+// Lightweight prompt functions are now imported from promptTemplates.ts 
 //# sourceMappingURL=analyzeTextRealtime.js.map

@@ -88,22 +88,22 @@ function generateUserPrompt(content, specificInstructions) {
  * @throws {AIAnalysisError} When response format is completely invalid
  */
 function parseOpenAIResponse(response, options) {
+    var _a;
     try {
         console.log('[OpenAI] Starting enhanced response parsing');
         // Use enhanced parsing with recovery mechanisms
         const parsedResult = options
             ? (0, responseValidation_1.parseResponseWithRecovery)(response)
             : (0, responseValidation_1.parseAndValidateResponse)(response);
-        console.log(`[OpenAI] Parse successful with ${parsedResult.parseMetadata.warnings.length} warnings`);
-        if (parsedResult.parseMetadata.warnings.length > 0) {
+        console.log(`[OpenAI] Parse successful`);
+        if (((_a = parsedResult.parseMetadata) === null || _a === void 0 ? void 0 : _a.warnings) && parsedResult.parseMetadata.warnings.length > 0) {
             console.warn('[OpenAI] Parse warnings:', parsedResult.parseMetadata.warnings);
         }
         return {
             grammarSuggestions: parsedResult.grammarSuggestions,
             styleSuggestions: parsedResult.styleSuggestions,
             readabilitySuggestions: parsedResult.readabilitySuggestions,
-            readabilityMetrics: parsedResult.readabilityMetrics,
-            parseMetadata: parsedResult.parseMetadata
+            readabilityMetrics: parsedResult.readabilityMetrics
         };
     }
     catch (error) {

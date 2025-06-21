@@ -277,11 +277,12 @@ runAllValidationTests();
 
 ## Performance Considerations
 
-### Prompt Length
-- **Grammar prompts**: ~2,500-3,500 characters
-- **Style prompts**: ~3,000-4,000 characters  
-- **Readability prompts**: ~2,800-3,800 characters
-- **Comprehensive prompts**: ~6,000-8,500 characters
+### Prompt Length (Optimized for Speed)
+- **Grammar prompts**: ~300-500 characters
+- **Style prompts**: ~300-500 characters  
+- **Readability prompts**: ~300-500 characters
+- **Comprehensive prompts**: ~800-1,200 characters
+- **Real-time prompts**: ~200-400 characters
 
 ### Response Quality
 - **Specificity**: Character-level text positioning
@@ -300,7 +301,7 @@ const systemPrompt = generateSystemPrompt(options);
 const userPrompt = generateUserPrompt(content);
 
 const completion = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
+  model: 'gpt-3.5-turbo',
   messages: [
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt }

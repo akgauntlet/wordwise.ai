@@ -106,13 +106,6 @@ export function parseOpenAIResponse(
   styleSuggestions: StyleSuggestion[];
   readabilitySuggestions: ReadabilitySuggestion[];
   readabilityMetrics: ReadabilityMetrics;
-  parseMetadata?: {
-    originalLength: number;
-    cleanedLength: number;
-    parseAttempts: number;
-    warnings: string[];
-    fallbacksUsed: string[];
-  };
 } {
   try {
     console.log('[OpenAI] Starting enhanced response parsing');
@@ -122,9 +115,9 @@ export function parseOpenAIResponse(
       ? parseResponseWithRecovery(response)
       : parseAndValidateResponse(response);
     
-    console.log(`[OpenAI] Parse successful with ${parsedResult.parseMetadata.warnings.length} warnings`);
+    console.log(`[OpenAI] Parse successful`);
     
-    if (parsedResult.parseMetadata.warnings.length > 0) {
+    if (parsedResult.parseMetadata?.warnings && parsedResult.parseMetadata.warnings.length > 0) {
       console.warn('[OpenAI] Parse warnings:', parsedResult.parseMetadata.warnings);
     }
     
@@ -132,8 +125,7 @@ export function parseOpenAIResponse(
       grammarSuggestions: parsedResult.grammarSuggestions,
       styleSuggestions: parsedResult.styleSuggestions,
       readabilitySuggestions: parsedResult.readabilitySuggestions,
-      readabilityMetrics: parsedResult.readabilityMetrics,
-      parseMetadata: parsedResult.parseMetadata
+      readabilityMetrics: parsedResult.readabilityMetrics
     };
     
   } catch (error) {

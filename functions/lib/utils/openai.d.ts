@@ -53,13 +53,6 @@ export declare function parseOpenAIResponse(response: string, options?: Analysis
     styleSuggestions: StyleSuggestion[];
     readabilitySuggestions: ReadabilitySuggestion[];
     readabilityMetrics: ReadabilityMetrics;
-    parseMetadata?: {
-        originalLength: number;
-        cleanedLength: number;
-        parseAttempts: number;
-        warnings: string[];
-        fallbacksUsed: string[];
-    };
 };
 /**
  * Handle OpenAI API errors and convert to user-friendly messages

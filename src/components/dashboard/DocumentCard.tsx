@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { setActiveDocument, formatCount } from "@/lib/utils";
 import { useActiveDocument } from "@/hooks/document";
-import type { Document } from "@/types/document";
+import type { Document, TiptapContent } from "@/types/document";
 
 /**
  * Document card props
@@ -27,6 +27,58 @@ interface DocumentCardProps {
   document: Document;
   onDelete: (documentId: string) => Promise<void>;
   isDeleting?: boolean;
+}
+
+/**
+ * Extract formatted preview text from TiptapContent
+ * Preserves line breaks and basic structure for better preview
+ */
+function extractFormattedPreview(content: TiptapContent, maxLines: number = 3): string {
+  if (!content) return '';
+
+  const lines: string[] = [];
+  
+  function processNode(node: TiptapContent) {
+    if (lines.length >= maxLines) return;
+    
+    if (node.text) {
+      // If we're adding to the last line, append. Otherwise start new line
+      if (lines.length === 0) {
+        lines.push(node.text);
+      } else {
+        lines[lines.length - 1] += node.text;
+      }
+    }
+    
+    if (node.content) {
+      for (const child of node.content) {
+        if (lines.length >= maxLines) break;
+        
+        // Handle different node types
+        if (node.type === 'paragraph' || node.type === 'heading') {
+          // Start a new line for paragraphs and headings
+          if (lines.length > 0 && lines[lines.length - 1].trim() !== '') {
+            lines.push('');
+          }
+          processNode(child);
+        } else if (node.type === 'hardBreak') {
+          // Force a new line for hard breaks
+          lines.push('');
+        } else {
+          processNode(child);
+        }
+      }
+    }
+  }
+  
+  processNode(content);
+  
+  // Clean up empty lines and limit to maxLines
+  const cleanedLines = lines
+    .filter(line => line.trim() !== '')
+    .slice(0, maxLines);
+  
+  return cleanedLines.join('\n').trim();
 }
 
 /**
@@ -102,6 +154,11 @@ export function DocumentCard({
   // Check if this document is currently active
   const isCurrentlyActive = isActiveDocument(document.id);
 
+  // Get formatted preview text
+  const previewText = document.content 
+    ? extractFormattedPreview(document.content, 3)
+    : document.plainText || "No content yet...";
+
   return (
     <Card className={`hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out cursor-pointer group h-64 flex flex-col ${isCurrentlyActive ? 'ring-2 ring-primary' : ''}`}>
       <CardHeader onClick={handleOpenDocument} className="pb-3 flex-shrink-0">
@@ -143,9 +200,9 @@ export function DocumentCard({
       <CardContent onClick={handleOpenDocument} className="flex flex-col flex-1 pt-0">
         {/* Document preview */}
         <div className="flex-1 mb-4">
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {document.plainText || "No content yet..."}
-          </p>
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-sans leading-relaxed overflow-hidden line-clamp-3">
+            {previewText}
+          </pre>
         </div>
         
         {/* Bottom section with stats and tags */}

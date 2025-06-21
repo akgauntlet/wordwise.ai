@@ -1,5 +1,5 @@
 /**
- * @fileoverview Specialized AI prompt templates for comprehensive text analysis
+ * @fileoverview Simplified AI prompt templates for fast text analysis
  * @module utils/promptTemplates
  * @author WordWise.ai Team
  * @created 2024-01-XX
@@ -8,10 +8,9 @@
  * - AI analysis types for prompt customization
  *
  * Usage:
- * - Generate specialized prompts for grammar, style, and readability analysis
- * - Provide ESL-specific guidance and educational content
+ * - Generate concise prompts for grammar, style, and readability analysis
+ * - Optimized for speed while maintaining quality
  * - Support different audience levels and document types
- * - Ensure consistent AI response format across all analysis types
  */
 import { AnalysisOptions } from '../types/ai';
 /**
@@ -46,107 +45,37 @@ export declare function generateStylePrompt(audienceLevel?: string, documentType
  */
 export declare function generateReadabilityPrompt(audienceLevel?: string, documentType?: string): string;
 /**
- * Generate user prompt that presents the text for analysis
+ * Generate simplified user prompt
  *
  * @param content - Text content to analyze
  * @param specificInstructions - Any additional specific instructions
  * @returns Formatted user prompt
  */
 export declare function generateUserPrompt(content: string, specificInstructions?: string): string;
-/**
- * ESL-specific grammar rules and common error patterns
- */
+export declare function generateLightweightSystemPrompt(options: AnalysisOptions): string;
+export declare function generateLightweightUserPrompt(content: string): string;
 export declare const ESL_GRAMMAR_PATTERNS: {
     articles: {
-        rules: string[];
-        commonErrors: {
-            pattern: RegExp;
-            rule: string;
-        }[];
+        rules: never[];
+        commonErrors: never[];
     };
     prepositions: {
-        timePrepositions: {
-            in: string[];
-            on: string[];
-            at: string[];
-        };
-        placePrepositions: {
-            in: string[];
-            on: string[];
-            at: string[];
-        };
+        timePrepositions: {};
+        placePrepositions: {};
     };
     subjectVerbAgreement: {
-        rules: string[];
+        rules: never[];
     };
 };
-/**
- * Academic writing style guidelines for ESL students
- */
 export declare const ACADEMIC_STYLE_GUIDELINES: {
     formalityMarkers: {
-        avoid: string[];
-        prefer: string[];
-    };
-    transitionWords: {
-        addition: string[];
-        contrast: string[];
-        cause: string[];
-        sequence: string[];
-    };
-    wordChoice: {
-        precision: string;
-        sophistication: string;
-        consistency: string;
+        avoid: never[];
+        prefer: never[];
     };
 };
-/**
- * Readability benchmarks and targets for different text types
- */
 export declare const READABILITY_TARGETS: {
     collegeLevel: {
-        fleschScore: {
-            min: number;
-            ideal: number;
-            max: number;
-        };
-        gradeLevel: {
-            min: number;
-            ideal: number;
-            max: number;
-        };
-        avgSentenceLength: {
-            min: number;
-            ideal: number;
-            max: number;
-        };
-        complexWordsPercent: {
-            min: number;
-            ideal: number;
-            max: number;
-        };
-    };
-    eslFriendly: {
-        fleschScore: {
-            min: number;
-            ideal: number;
-            max: number;
-        };
-        gradeLevel: {
-            min: number;
-            ideal: number;
-            max: number;
-        };
-        avgSentenceLength: {
-            min: number;
-            ideal: number;
-            max: number;
-        };
-        complexWordsPercent: {
-            min: number;
-            ideal: number;
-            max: number;
-        };
+        fleschScore: number[];
     };
 };
 //# sourceMappingURL=promptTemplates.d.ts.map

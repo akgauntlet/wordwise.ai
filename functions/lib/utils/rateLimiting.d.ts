@@ -11,17 +11,19 @@
  * - Check user rate limits before processing requests
  * - Track API usage and enforce quotas
  * - Prevent abuse and manage costs
+ * - Optimized with memory caching for better performance
  */
 /**
- * Check if user has exceeded rate limits
+ * Check if user has exceeded rate limits (optimized version)
  *
  * @param userId - User ID to check
  * @param contentLength - Length of content being analyzed
+ * @param isRealtime - Whether this is a real-time analysis (lighter limits)
  * @returns Promise resolving to rate limit status
  *
  * @throws {AIAnalysisError} When rate limit is exceeded
  */
-export declare function checkRateLimit(userId: string, contentLength: number): Promise<void>;
+export declare function checkRateLimit(userId: string, contentLength: number, isRealtime?: boolean): Promise<void>;
 /**
  * Get current rate limit status for a user
  *

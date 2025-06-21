@@ -11,6 +11,7 @@
  * - Check user rate limits before processing requests
  * - Track API usage and enforce quotas
  * - Prevent abuse and manage costs
+ * - Optimized with memory caching for better performance
  */
 
 import { getFirestore } from 'firebase-admin/firestore';
@@ -45,6 +46,15 @@ interface UserRateLimit {
 }
 
 /**
+ * Memory cache for rate limiting (reduces Firestore operations)
+ */
+interface CachedRateLimit {
+  data: UserRateLimit;
+  cacheTime: number;
+  isDirty: boolean; // Needs to be written back to Firestore
+}
+
+/**
  * Default rate limit configuration (100 requests, 1M characters per hour)
  */
 const DEFAULT_RATE_LIMIT: RateLimitConfig = {
@@ -54,38 +64,63 @@ const DEFAULT_RATE_LIMIT: RateLimitConfig = {
 };
 
 /**
- * Check if user has exceeded rate limits
+ * Memory cache for rate limits (5 minute cache)
+ */
+const rateLimitCache = new Map<string, CachedRateLimit>();
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const BATCH_WRITE_INTERVAL_MS = 30 * 1000; // 30 seconds
+
+/**
+ * Check if user has exceeded rate limits (optimized version)
  * 
  * @param userId - User ID to check
  * @param contentLength - Length of content being analyzed
+ * @param isRealtime - Whether this is a real-time analysis (lighter limits)
  * @returns Promise resolving to rate limit status
  * 
  * @throws {AIAnalysisError} When rate limit is exceeded
  */
 export async function checkRateLimit(
   userId: string, 
-  contentLength: number
+  contentLength: number,
+  isRealtime: boolean = false
 ): Promise<void> {
-  const db = getFirestore();
-  const rateLimitRef = db.collection('rateLimits').doc(userId);
+  const now = Date.now();
   
   try {
-    const doc = await rateLimitRef.get();
-    const now = Date.now();
-    
+    // Check memory cache first
+    let cachedRateLimit = rateLimitCache.get(userId);
     let rateLimit: UserRateLimit;
     
-    if (!doc.exists) {
-      // First request for this user
-      rateLimit = {
-        userId,
-        windowStart: now,
-        requestCount: 0,
-        characterCount: 0,
-        lastRequest: 0
-      };
+    if (cachedRateLimit && (now - cachedRateLimit.cacheTime) < CACHE_DURATION_MS) {
+      // Use cached data
+      rateLimit = cachedRateLimit.data;
     } else {
-      rateLimit = doc.data() as UserRateLimit;
+      // Load from Firestore
+      const db = getFirestore();
+      const rateLimitRef = db.collection('rateLimits').doc(userId);
+      const doc = await rateLimitRef.get();
+      
+      if (!doc.exists) {
+        // First request for this user
+        rateLimit = {
+          userId,
+          windowStart: now,
+          requestCount: 0,
+          characterCount: 0,
+          lastRequest: 0
+        };
+      } else {
+        rateLimit = doc.data() as UserRateLimit;
+      }
+      
+      // Cache the result
+      cachedRateLimit = {
+        data: rateLimit,
+        cacheTime: now,
+        isDirty: false
+      };
+      rateLimitCache.set(userId, cachedRateLimit);
     }
     
     // Check if we need to reset the window
@@ -93,10 +128,20 @@ export async function checkRateLimit(
       rateLimit.windowStart = now;
       rateLimit.requestCount = 0;
       rateLimit.characterCount = 0;
+      cachedRateLimit.isDirty = true;
     }
     
+    // Apply different limits for real-time vs full analysis
+    const requestLimit = isRealtime ? 
+      Math.floor(DEFAULT_RATE_LIMIT.maxRequestsPerHour * 1.5) : // More lenient for real-time
+      DEFAULT_RATE_LIMIT.maxRequestsPerHour;
+    
+    const characterLimit = isRealtime ?
+      Math.floor(DEFAULT_RATE_LIMIT.maxCharactersPerHour * 0.5) : // Less characters for real-time
+      DEFAULT_RATE_LIMIT.maxCharactersPerHour;
+    
     // Check request count limit
-    if (rateLimit.requestCount >= DEFAULT_RATE_LIMIT.maxRequestsPerHour) {
+    if (rateLimit.requestCount >= requestLimit) {
       const resetTime = rateLimit.windowStart + DEFAULT_RATE_LIMIT.windowMs;
       const minutesUntilReset = Math.ceil((resetTime - now) / (60 * 1000));
       
@@ -104,30 +149,37 @@ export async function checkRateLimit(
         code: 'RATE_LIMIT_EXCEEDED',
         message: `Too many analysis requests. Please try again in ${minutesUntilReset} minutes.`,
         retryAfter: Math.ceil((resetTime - now) / 1000), // seconds
-        details: `Request limit: ${DEFAULT_RATE_LIMIT.maxRequestsPerHour} per hour`
+        details: `Request limit: ${requestLimit} per hour`
       } as AIAnalysisError;
     }
     
     // Check character count limit
-    if (rateLimit.characterCount + contentLength > DEFAULT_RATE_LIMIT.maxCharactersPerHour) {
+    if (rateLimit.characterCount + contentLength > characterLimit) {
       const resetTime = rateLimit.windowStart + DEFAULT_RATE_LIMIT.windowMs;
       const minutesUntilReset = Math.ceil((resetTime - now) / (60 * 1000));
       
       throw {
         code: 'RATE_LIMIT_EXCEEDED',
-        message: `Character analysis limit exceeded. Please try again in ${minutesUntilReset} minutes.`,
+        message: `Too much content analyzed. Please try again in ${minutesUntilReset} minutes.`,
         retryAfter: Math.ceil((resetTime - now) / 1000), // seconds
-        details: `Character limit: ${DEFAULT_RATE_LIMIT.maxCharactersPerHour} per hour`
+        details: `Character limit: ${characterLimit.toLocaleString()} per hour`
       } as AIAnalysisError;
     }
     
-    // Update the rate limit data
-    rateLimit.requestCount += 1;
+    // Update counters
+    rateLimit.requestCount++;
     rateLimit.characterCount += contentLength;
     rateLimit.lastRequest = now;
+    cachedRateLimit.isDirty = true;
     
-    // Save updated rate limit data
-    await rateLimitRef.set(rateLimit);
+    // For real-time requests, batch writes to reduce Firestore operations
+    if (isRealtime) {
+      scheduleRateLimitWrite(userId);
+    } else {
+      // For full analysis, write immediately
+      await writeRateLimitToFirestore(userId, rateLimit);
+      cachedRateLimit.isDirty = false;
+    }
     
   } catch (error) {
     // If it's already an AIAnalysisError, re-throw it
@@ -135,10 +187,45 @@ export async function checkRateLimit(
       throw error;
     }
     
-    // Log unexpected errors but don't block the request
     console.error('Error checking rate limit:', error);
-    // Allow the request to proceed if rate limiting fails
+    
+    // Allow the request to proceed on rate limit check failure
+    // This prevents Firestore issues from blocking all analysis
+    console.warn(`Rate limit check failed for user ${userId}, allowing request to proceed`);
   }
+}
+
+/**
+ * Batch write rate limits to Firestore (reduces operations for real-time analysis)
+ */
+const pendingWrites = new Set<string>();
+
+function scheduleRateLimitWrite(userId: string): void {
+  if (pendingWrites.has(userId)) {
+    return; // Already scheduled
+  }
+  
+  pendingWrites.add(userId);
+  
+  setTimeout(async () => {
+    try {
+      const cachedRateLimit = rateLimitCache.get(userId);
+      if (cachedRateLimit && cachedRateLimit.isDirty) {
+        await writeRateLimitToFirestore(userId, cachedRateLimit.data);
+        cachedRateLimit.isDirty = false;
+      }
+    } catch (error) {
+      console.error(`Error writing batched rate limit for user ${userId}:`, error);
+    } finally {
+      pendingWrites.delete(userId);
+    }
+  }, BATCH_WRITE_INTERVAL_MS);
+}
+
+async function writeRateLimitToFirestore(userId: string, rateLimit: UserRateLimit): Promise<void> {
+  const db = getFirestore();
+  const rateLimitRef = db.collection('rateLimits').doc(userId);
+  await rateLimitRef.set(rateLimit);
 }
 
 /**
@@ -154,24 +241,32 @@ export async function getRateLimitStatus(userId: string): Promise<{
   charactersRemaining: number;
   windowResetTime: number;
 }> {
-  const db = getFirestore();
-  const rateLimitRef = db.collection('rateLimits').doc(userId);
   const now = Date.now();
   
   try {
-    const doc = await rateLimitRef.get();
+    // Check cache first
+    const cachedRateLimit = rateLimitCache.get(userId);
+    let rateLimit: UserRateLimit;
     
-    if (!doc.exists) {
-      return {
-        requestsUsed: 0,
-        requestsRemaining: DEFAULT_RATE_LIMIT.maxRequestsPerHour,
-        charactersUsed: 0,
-        charactersRemaining: DEFAULT_RATE_LIMIT.maxCharactersPerHour,
-        windowResetTime: now + DEFAULT_RATE_LIMIT.windowMs
-      };
+    if (cachedRateLimit && (now - cachedRateLimit.cacheTime) < CACHE_DURATION_MS) {
+      rateLimit = cachedRateLimit.data;
+    } else {
+      const db = getFirestore();
+      const rateLimitRef = db.collection('rateLimits').doc(userId);
+      const doc = await rateLimitRef.get();
+      
+      if (!doc.exists) {
+        return {
+          requestsUsed: 0,
+          requestsRemaining: DEFAULT_RATE_LIMIT.maxRequestsPerHour,
+          charactersUsed: 0,
+          charactersRemaining: DEFAULT_RATE_LIMIT.maxCharactersPerHour,
+          windowResetTime: now + DEFAULT_RATE_LIMIT.windowMs
+        };
+      }
+      
+      rateLimit = doc.data() as UserRateLimit;
     }
-    
-    const rateLimit = doc.data() as UserRateLimit;
     
     // Check if window has expired
     if (now - rateLimit.windowStart >= DEFAULT_RATE_LIMIT.windowMs) {
@@ -230,6 +325,8 @@ export async function cleanupExpiredRateLimits(olderThanHours: number = 24): Pro
     const batch = db.batch();
     snapshot.docs.forEach(doc => {
       batch.delete(doc.ref);
+      // Also remove from memory cache
+      rateLimitCache.delete(doc.id);
     });
     
     await batch.commit();

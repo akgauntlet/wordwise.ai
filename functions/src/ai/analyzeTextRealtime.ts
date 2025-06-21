@@ -33,6 +33,10 @@ import {
   calculateContentHash,
   handleOpenAIError
 } from '../utils/openai';
+import { 
+  generateLightweightSystemPrompt,
+  generateLightweightUserPrompt
+} from '../utils/promptTemplates';
 import { checkRateLimit } from '../utils/rateLimiting';
 import { parseAndValidateResponse } from '../utils/responseValidation';
 
@@ -111,8 +115,8 @@ export const analyzeTextRealtime = onCall(
       // Validate request data with more lenient limits for real-time
       validateRealtimeRequest(content, options);
       
-      // Check rate limits (shared with main analysis)
-      await checkRateLimit(userId, content.length);
+      // Check rate limits (optimized for real-time with batched writes)
+      await checkRateLimit(userId, content.length, true);
       
       // Calculate or use provided content hash
       const finalContentHash = contentHash || calculateContentHash(content, options);
@@ -125,17 +129,17 @@ export const analyzeTextRealtime = onCall(
       const userPrompt = generateLightweightUserPrompt(content);
       
       console.log(`[RT-${requestId}] Sending lightweight request to OpenAI`);
-      console.log(`[RT-${requestId}] Request details: model=gpt-4o, content_length=${content.length}`);
+      console.log(`[RT-${requestId}] Request details: model=gpt-3.5-turbo, content_length=${content.length}`);
       
       // Call OpenAI API with optimized parameters for speed
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o', // High-quality model for enhanced analysis
+        model: 'gpt-3.5-turbo', // Fast and cost-effective model for analysis
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.2, // Lower temperature for consistent, faster responses
-        max_tokens: 2000 // Reduced token limit for speed
+        temperature: 0.1, // Very low temperature for maximum speed
+        max_tokens: 1000 // Further reduced for lightweight real-time analysis
       });
       
       const aiResponse = completion.choices[0]?.message?.content;
@@ -251,78 +255,4 @@ function validateRealtimeRequest(content: string, options: AnalysisOptions): voi
   }
 }
 
-/**
- * Generate lightweight system prompt optimized for speed
- * 
- * @param options - Analysis options
- * @returns Lightweight system prompt
- */
-function generateLightweightSystemPrompt(options: AnalysisOptions): string {
-  let prompt = `You are a helpful writing assistant optimized for real-time analysis. Provide concise, actionable suggestions.
-
-RESPONSE FORMAT: Return valid JSON only, no markdown formatting.
-
-{
-  "grammarSuggestions": [...],
-  "styleSuggestions": [...],
-  "readabilitySuggestions": [...],
-  "readabilityMetrics": {
-    "fleschScore": 50,
-    "gradeLevel": 12,
-    "avgSentenceLength": 15,
-    "avgSyllablesPerWord": 1.5,
-    "wordCount": 0,
-    "sentenceCount": 0,
-    "complexWordsPercent": 15
-  }
-}
-
-SUGGESTION FORMAT:
-{
-  "id": "unique_id",
-  "type": "grammar|style|readability",
-  "severity": "low|medium|high",
-  "startOffset": 0,
-  "endOffset": 5,
-  "originalText": "original text",
-  "suggestedText": "suggested text",
-  "explanation": "Brief explanation",
-  "category": "category_name",
-  "confidence": 0.8
-}
-
-GUIDELINES:
-- Focus on the most important issues first
-- Provide brief, clear explanations
-- Limit suggestions to top 10 per category for speed
-- Prioritize grammar over style for real-time analysis`;
-
-  // Add specific analysis types based on options
-  if (options.includeGrammar) {
-    prompt += '\n- Include grammar and spelling corrections';
-  }
-  
-  if (options.includeStyle) {
-    prompt += '\n- Include basic style improvements for clarity';
-  }
-  
-  if (options.includeReadability) {
-    prompt += '\n- Include essential readability suggestions';
-  }
-
-  return prompt;
-}
-
-/**
- * Generate lightweight user prompt
- * 
- * @param content - Text content to analyze
- * @returns Lightweight user prompt
- */
-function generateLightweightUserPrompt(content: string): string {
-  return `Analyze this text for real-time feedback. Focus on the most important issues:
-
-"${content}"
-
-Provide top suggestions in JSON format.`;
-} 
+// Lightweight prompt functions are now imported from promptTemplates.ts 
