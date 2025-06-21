@@ -207,7 +207,7 @@ export function useEditorWithSuggestions({
     if (validSuggestions.length !== suggestions.length) {
       setSuggestions(validSuggestions);
       editor.commands.updateSuggestions(validSuggestions);
-      console.log(`Cleaned up ${suggestions.length - validSuggestions.length} invalid suggestions`);
+      // Cleaned up invalid suggestions
     }
   }, [editor, suggestions]);
 
@@ -271,7 +271,7 @@ export function useEditorWithSuggestions({
       }
       
       // TODO: Track acceptance in Firebase for analytics
-      console.log('Suggestion accepted:', suggestion.id);
+      // Suggestion accepted
     } else {
       console.warn('Failed to apply suggestion:', suggestion.id);
     }
@@ -296,7 +296,7 @@ export function useEditorWithSuggestions({
       }
       
       // TODO: Track rejection in Firebase for analytics
-      console.log('Suggestion rejected:', suggestion.id);
+      // Suggestion rejected
     } else {
       console.warn('Failed to reject suggestion:', suggestion.id);
     }
@@ -329,7 +329,7 @@ export function useEditorWithSuggestions({
       }
       
       // TODO: Track bulk acceptance in Firebase for analytics
-      console.log(`${successCount} of ${suggestionsOfType.length} ${type} suggestions accepted`);
+      // Bulk suggestions accepted
     }
   }, [editor, suggestions, selectedSuggestion]);
 
@@ -360,7 +360,7 @@ export function useEditorWithSuggestions({
       }
       
       // TODO: Track bulk rejection in Firebase for analytics
-      console.log(`${successCount} of ${suggestionsOfType.length} ${type} suggestions rejected`);
+      // Bulk suggestions rejected
     }
   }, [editor, suggestions, selectedSuggestion]);
 

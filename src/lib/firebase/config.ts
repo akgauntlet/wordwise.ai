@@ -83,15 +83,13 @@ export const functions = getFunctions(app);
  */
 export function getFunctionsUrl(): string {
   const hostname = window.location.hostname;
-  const protocol = window.location.protocol;
-  const port = window.location.port;
   
-  console.log('[getFunctionsUrl] Current location:', { hostname, protocol, port });
+  // Determining functions URL based on environment
   
   // If running on localhost (local development)
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     const localUrl = `http://localhost:5001/${config.projectId}/us-central1`;
-    console.log('[getFunctionsUrl] Using local emulator:', localUrl);
+    // Using local emulator
     return localUrl;
   }
   
@@ -104,13 +102,13 @@ export function getFunctionsUrl(): string {
     hostname.includes('wordwise-ai-2024-12');
   
   if (isFirebaseHosting) {
-    console.log('[getFunctionsUrl] Detected Firebase Hosting, using rewrites: /api');
+    // Using Firebase Hosting rewrites
     return '/api'; // Uses Firebase hosting rewrites
   }
   
   // Fallback to production URL for any other domain
   const productionUrl = `https://us-central1-${config.projectId}.cloudfunctions.net`;
-  console.log('[getFunctionsUrl] Using production URL:', productionUrl);
+      // Using production URL
   return productionUrl;
 }
 

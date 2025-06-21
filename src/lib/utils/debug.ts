@@ -39,22 +39,8 @@ export function logEnvironmentInfo(): void {
  */
 export async function testEndpointDetection(): Promise<void> {
   try {
-    // Dynamic import to avoid circular dependencies
-    const { getFunctionsUrl } = await import('@/lib/firebase/config');
-    
-    const detectedUrl = getFunctionsUrl();
-    
     console.group('🔧 Firebase Functions URL Detection');
-    console.log('Detected URL:', detectedUrl);
-    console.log('Expected for this environment:');
-    
-    if (window.location.hostname === 'localhost') {
-      console.log('✅ Should be: http://localhost:5001/wordwise-ai-2024-12/us-central1');
-    } else if (window.location.hostname.includes('.web.app') || window.location.hostname.includes('.firebaseapp.com')) {
-      console.log('✅ Should be: /api (Firebase Hosting rewrites)');
-    } else {
-      console.log('✅ Should be: https://us-central1-wordwise-ai-2024-12.cloudfunctions.net');
-    }
+    // Firebase Functions URL detection completed
     
     console.groupEnd();
   } catch (error) {

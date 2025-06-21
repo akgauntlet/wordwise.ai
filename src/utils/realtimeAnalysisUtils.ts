@@ -192,7 +192,7 @@ export function getFromCache(contentHash: string): RealtimeAnalysisResult | null
       timestamp: new Date(cached.timestamp)
     };
     
-    console.log('[Cache] Hit for hash:', contentHash.substring(0, 8));
+    // Cache hit
     return result;
     
   } catch (error) {
@@ -232,7 +232,7 @@ export function setToCache(
     localStorage.setItem(cacheKey, serialized);
     updateCacheMetadata(contentHash, 'add', serialized.length);
     
-    console.log('[Cache] Stored result for hash:', contentHash.substring(0, 8));
+    // Cache stored
     
   } catch (error) {
     console.error('[Cache] Error storing to cache:', error);
@@ -267,7 +267,7 @@ export function clearExpiredCache(): () => void {
       
       if (removedCount > 0) {
         rebuildCacheMetadata();
-        console.log(`[Cache] Cleaned up ${removedCount} expired entries`);
+        // Cache cleanup completed
       }
     } catch (error) {
       console.error('[Cache] Error during cleanup:', error);
@@ -298,7 +298,7 @@ export function clearAllCache(): void {
     });
     
     localStorage.removeItem(CACHE_METADATA_KEY);
-    console.log('[Cache] Cleared all entries');
+    // Cache cleared
     
   } catch (error) {
     console.error('[Cache] Error clearing cache:', error);
@@ -446,7 +446,7 @@ function clearOldestCacheEntries(count: number): void {
       localStorage.removeItem(entry.key);
     });
     
-    console.log(`[Cache] Removed ${toRemove.length} oldest entries`);
+    // Cache maintenance completed
     rebuildCacheMetadata();
     
   } catch (error) {

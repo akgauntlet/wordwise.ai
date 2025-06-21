@@ -143,12 +143,7 @@ export class DocumentImporter {
       const functionsUrl = getParseDocumentUrl();
       const endpoint = `${functionsUrl}/parse`;
       
-      console.log('Sending request to:', endpoint);
-      console.log('File details:', { 
-        name: file.name, 
-        size: file.size, 
-        type: file.type 
-      });
+          // Sending import request
 
       // Create abort controller for timeout handling
       const controller = new AbortController();

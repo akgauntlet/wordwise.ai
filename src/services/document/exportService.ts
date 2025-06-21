@@ -68,7 +68,7 @@ class DocumentExportService {
     const functionsUrl = getGenerateExportUrl();
     const endpoint = `${functionsUrl}/generate`;
     
-    console.log('[ExportService] Using endpoint:', endpoint);
+    // Using export endpoint
     return endpoint;
   }
 
@@ -187,13 +187,7 @@ class DocumentExportService {
 
         const endpoint = this.getHttpEndpointUrl();
         
-        console.log('[ExportService] Sending request to:', endpoint);
-        console.log('[ExportService] Request data:', {
-          documentId,
-          title: title.substring(0, 50) + '...',
-          format,
-          options
-        });
+        // Sending export request
 
         // Create abort controller for timeout handling
         const controller = new AbortController();
@@ -260,7 +254,7 @@ class DocumentExportService {
 
         // Wait before retry with exponential backoff
         const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
-        console.log(`[ExportService] Retrying in ${delay}ms...`);
+        // Retrying export request
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }

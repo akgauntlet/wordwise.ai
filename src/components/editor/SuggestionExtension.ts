@@ -133,12 +133,12 @@ function findSuggestionPosition(doc: Node, suggestion: WritingSuggestion): { fro
         // Check if the exact position still contains our text
         const textAtPosition = doc.textBetween(suggestion.startOffset, suggestion.endOffset);
         if (textAtPosition === originalText) {
-          console.log(`Using exact position for suggestion ${suggestion.id}: ${suggestion.startOffset}-${suggestion.endOffset}`);
+          // Using exact position for suggestion
           return { from: suggestion.startOffset, to: suggestion.endOffset };
         }
       } catch {
         // Exact position is invalid, fall back to search
-        console.log(`Exact position invalid for suggestion ${suggestion.id}, falling back to search`);
+        // Falling back to text search
       }
     }
   }
@@ -148,13 +148,13 @@ function findSuggestionPosition(doc: Node, suggestion: WritingSuggestion): { fro
   
   if (positions.length === 0) {
     // Text not found - might have been edited
-    console.log(`Text "${originalText}" not found in document for suggestion ${suggestion.id}`);
+          // Text not found in document
     return null;
   }
   
   if (positions.length === 1) {
     // Only one occurrence, use it
-    console.log(`Single occurrence found for suggestion ${suggestion.id}: ${positions[0].from}-${positions[0].to}`);
+          // Single occurrence found
     return positions[0];
   }
   
@@ -170,7 +170,7 @@ function findSuggestionPosition(doc: Node, suggestion: WritingSuggestion): { fro
     }
   }
   
-  console.log(`Found ${positions.length} occurrences of "${originalText}", using position ${bestMatch.from}-${bestMatch.to} (distance: ${minDistance})`);
+      // Multiple occurrences found, using best match
   return bestMatch;
 }
 
@@ -334,11 +334,7 @@ export const SuggestionExtension = Extension.create<SuggestionPluginOptions>({
        * Apply a suggestion to the text
        */
       applySuggestion: (suggestion: WritingSuggestion) => ({ tr }) => {
-        console.log(`Attempting to apply suggestion ${suggestion.id}:`, {
-          originalText: suggestion.originalText,
-          suggestedText: suggestion.suggestedText,
-          originalPosition: `${suggestion.startOffset}-${suggestion.endOffset}`
-        });
+        // Applying suggestion
 
         // Find current position of the suggestion text
         const position = findSuggestionPosition(tr.doc, suggestion);
@@ -349,7 +345,7 @@ export const SuggestionExtension = Extension.create<SuggestionPluginOptions>({
           return false;
         }
 
-        console.log(`Found suggestion position: ${position.from}-${position.to}`);
+        // Found suggestion position
 
         // Verify the text still matches what we expect
         const currentText = tr.doc.textBetween(position.from, position.to);
@@ -366,7 +362,7 @@ export const SuggestionExtension = Extension.create<SuggestionPluginOptions>({
           return false;
         }
         
-        console.log(`Applying suggestion: replacing "${currentText}" with "${suggestion.suggestedText}"`);
+        // Replacing text with suggestion
         
         // Replace the text with the suggested text
         tr.replaceWith(
@@ -375,15 +371,15 @@ export const SuggestionExtension = Extension.create<SuggestionPluginOptions>({
           tr.doc.type.schema.text(suggestion.suggestedText)
         );
         
-        console.log(`Successfully applied suggestion ${suggestion.id}`);
+        // Successfully applied suggestion
         return true;
       },
 
       /**
        * Reject a suggestion (remove from display)
        */
-      rejectSuggestion: (suggestion: WritingSuggestion) => () => {
-        console.log(`Rejecting suggestion ${suggestion.id}`);
+      rejectSuggestion: () => () => {
+        // Rejecting suggestion
         return true;
       },
     };

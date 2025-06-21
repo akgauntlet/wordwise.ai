@@ -205,7 +205,7 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
       if (fullConfig.enableCaching) {
         const cached = getFromCache(contentHash);
         if (cached) {
-          console.log('[RealtimeAnalysis] Cache hit for content hash:', contentHash.substring(0, 8));
+          // Cache hit for analysis
           updateStatus('complete', { 
             result: cached,
             lastAnalyzedContent: content,
@@ -219,7 +219,7 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
       }
       
       // Make API request
-      console.log('[RealtimeAnalysis] Making API request for content length:', content.length);
+              // Making API request for analysis
       
       const response = await analyzeTextRealtimeFunc({
         content,
@@ -230,7 +230,7 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
       
       // Check if request was cancelled
       if (currentRequestRef.current !== requestId) {
-        console.log('[RealtimeAnalysis] Request cancelled:', requestId);
+        // Analysis request cancelled
         return;
       }
       
@@ -258,11 +258,7 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
           error: null
         });
         
-        console.log('[RealtimeAnalysis] Analysis completed:', {
-          requestId,
-          suggestions: result.totalSuggestions,
-          processingTime: result.processingTimeMs
-        });
+        // Analysis completed
         
       } else {
         throw new Error(responseData.error?.message || 'Analysis request failed');
@@ -347,7 +343,7 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
       );
       
       if (!hasSignificantChanges && state.status === 'complete') {
-        console.log('[RealtimeAnalysis] No significant changes detected, skipping analysis');
+        // No significant changes, skipping analysis
         return;
       }
     }
