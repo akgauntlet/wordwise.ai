@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageErrorBoundary } from '@/components/layout';
 import { useActiveDocument, useDocumentVersions, useDocument } from '@/hooks/document';
-import { setActiveDocument } from '@/lib/utils';
+import { setActiveDocument, formatCount } from '@/lib/utils';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { 
@@ -25,7 +25,7 @@ import {
   ExternalLink, 
   Loader2,
   ArrowLeft,
-  Hash,
+  Type,
   Calendar,
   Eye
 } from 'lucide-react';
@@ -83,9 +83,9 @@ function VersionCard({ version, onSaveAsNew, onPreview, isLoading = false }: Ver
                   </span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <Hash className="h-3 w-3" />
+                  <Type className="h-3 w-3" />
                   <span className="text-xs">
-                    {version.wordCount} words
+                    {formatCount(version.wordCount, 'words')}
                   </span>
                 </span>
               </CardDescription>
@@ -209,9 +209,9 @@ function QuickPreviewModal({ version, isOpen, onClose }: QuickPreviewModalProps)
                   </span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <Hash className="h-3 w-3" />
+                  <Type className="h-3 w-3" />
                   <span className="text-xs">
-                    {version.wordCount} words
+                    {formatCount(version.wordCount, 'words')}
                   </span>
                 </span>
               </CardDescription>

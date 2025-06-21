@@ -66,7 +66,7 @@ function DashboardPageContent() {
           {/* Quick Actions */}
           <div className="mb-12">
             <h2 className="text-2xl font-semibold mb-6">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="cursor-pointer hover:shadow-md hover:bg-accent/30 transition-all duration-300 ease-out" onClick={handleCreateDocument}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -136,8 +136,8 @@ function DashboardPageContent() {
           </div>
 
           {/* User Profile */}
-          <div className="mb-8">
-            <Card className="bg-muted/30 border-muted-foreground/20">
+          <div className="mb-4">
+            <Card className="bg-muted/30 border-muted-foreground/15">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />

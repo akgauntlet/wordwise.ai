@@ -18,6 +18,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useEditorStats } from '@/hooks/editor';
+import { formatNumber, formatCount } from '@/lib/utils';
 import type { Editor } from '@tiptap/react';
 
 /**
@@ -92,7 +93,7 @@ const ProgressBar = memo(({
       <div className="flex justify-between text-sm">
         <span className="text-muted-foreground">{label}</span>
         <span className={`font-medium ${isComplete ? 'text-green-600' : 'text-foreground'}`}>
-          {current} / {target} ({Math.round(percentage)}%)
+          {formatNumber(current)} / {formatNumber(target)} ({Math.round(percentage)}%)
         </span>
       </div>
       <div className="w-full bg-muted rounded-full h-2">
@@ -122,11 +123,11 @@ const CompactStats = memo(({
   <div className={`flex items-center gap-4 text-sm text-muted-foreground ${className}`}>
     <div className="flex items-center gap-1">
       <Type className="h-4 w-4" />
-      <span>{stats.words} words</span>
+      <span>{formatCount(stats.words, 'words')}</span>
     </div>
     <div className="flex items-center gap-1">
       <Keyboard className="h-4 w-4" />
-      <span>{stats.characters} characters</span>
+      <span>{formatCount(stats.characters, 'characters')}</span>
     </div>
     <div className="flex items-center gap-1">
       <Clock className="h-4 w-4" />
@@ -155,16 +156,16 @@ const DetailedStats = memo(({
       <StatItem
         icon={Type}
         label="Words"
-        value={stats.words}
+        value={formatNumber(stats.words)}
         color="text-blue-600"
         description="Total word count"
       />
       <StatItem
         icon={Keyboard}
         label="Characters"
-        value={stats.characters}
+        value={formatNumber(stats.characters)}
         color="text-green-600"
-        description={`${stats.charactersNoSpaces} without spaces`}
+        description={`${formatNumber(stats.charactersNoSpaces)} without spaces`}
       />
     </div>
 
@@ -173,7 +174,7 @@ const DetailedStats = memo(({
       <StatItem
         icon={FileText}
         label="Sentences"
-        value={stats.sentences}
+        value={formatNumber(stats.sentences)}
         color="text-purple-600"
         description={`${stats.avgWordsPerSentence} words/sentence`}
       />
@@ -191,7 +192,7 @@ const DetailedStats = memo(({
       <StatItem
         icon={TrendingUp}
         label="Paragraphs"
-        value={stats.paragraphs}
+        value={formatNumber(stats.paragraphs)}
         color="text-indigo-600"
         description="Content blocks"
       />

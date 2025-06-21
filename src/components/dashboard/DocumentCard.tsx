@@ -11,12 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  FileText, 
-  Hash, 
+  Type, 
+  Keyboard,
   Trash2, 
-  Clock
+  Calendar
 } from "lucide-react";
-import { setActiveDocument } from "@/lib/utils";
+import { setActiveDocument, formatCount } from "@/lib/utils";
 import { useActiveDocument } from "@/hooks/document";
 import type { Document } from "@/types/document";
 
@@ -170,17 +170,17 @@ export function DocumentCard({
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                <Hash className="h-3 w-3" />
-                <span>{document.wordCount} words</span>
+                <Type className="h-3 w-3" />
+                <span>{formatCount(document.wordCount, 'words')}</span>
               </div>
               <div className="flex items-center gap-1">
-                <FileText className="h-3 w-3" />
-                <span>{document.characterCount} characters</span>
+                <Keyboard className="h-3 w-3" />
+                <span>{formatCount(document.characterCount, 'characters')}</span>
               </div>
             </div>
             
             <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
+              <Calendar className="h-3 w-3" />
               <span>Updated {formatDate(document.updatedAt)}</span>
             </div>
           </div>

@@ -7,6 +7,7 @@
 
 export * from './cn';
 export * from './sessionStorage';
+export * from './numberFormat';
 
 // Additional utilities will be exported here as they are created 
 

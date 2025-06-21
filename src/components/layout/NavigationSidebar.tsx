@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useActiveDocument } from '@/hooks/document';
+import { useDocuments } from '@/hooks/document/useDocuments';
 import { 
   Home, 
   FileText, 
@@ -58,10 +59,16 @@ interface NavigationItem {
 export function NavigationSidebar({ isCollapsed = false, className = '' }: NavigationSidebarProps) {
   const { user, profile, signOut } = useAuth();
   const { activeDocumentId, hasActiveDocument } = useActiveDocument();
+  const { documents } = useDocuments();
   const location = useLocation();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  // Find the active document to get its name
+  const activeDocument = activeDocumentId 
+    ? documents.find(doc => doc.id === activeDocumentId)
+    : null;
 
   // Determine if sidebar should show expanded content
   const shouldShowContent = !isCollapsed || isExpanded;
@@ -167,6 +174,7 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isEditor = item.label === 'Editor';
+            const shouldShowDocumentName = isEditor && activeDocument && shouldShowContent;
             
             return (
               <Button
@@ -176,7 +184,7 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
                 onClick={isEditor ? handleEditorNavigate : () => handleNavigate(item.path)}
                 disabled={item.disabled}
                 className={`
-                  w-full justify-start gap-3 h-12 px-3
+                  w-full justify-start gap-3 px-3 h-14
                   ${item.isActive ? 'bg-secondary text-secondary-foreground' : ''}
                   ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
@@ -190,7 +198,14 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
                 {shouldShowContent && (
-                  <span className="truncate">{item.label}</span>
+                  <div className="flex flex-col items-start min-w-0 flex-1">
+                    <span className="truncate">{item.label}</span>
+                    {shouldShowDocumentName && (
+                      <span className="text-xs text-blue-600 truncate w-full text-left">
+                        {activeDocument.title}
+                      </span>
+                    )}
+                  </div>
                 )}
               </Button>
             );
