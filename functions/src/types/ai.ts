@@ -55,7 +55,7 @@ export type AnalyzeTextCallableRequest = CallableRequest<AnalyzeTextRequest>;
  * Request payload for real-time text analysis function
  */
 export interface AnalyzeTextRealtimeRequest {
-  /** Text content to analyze (max 5,000 characters for real-time) */
+  /** Text content to analyze (max 10,000 characters for real-time) */
   content: string;
   /** Analysis configuration options */
   options: AnalysisOptions;

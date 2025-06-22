@@ -317,12 +317,12 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
     }
     
     // Check content length limits
-    if (content.length > 5000) {
+    if (content.length > 10000) {
       updateStatus('error', {
         error: {
           code: 'CONTENT_TOO_LONG',
           message: 'Content too long for real-time analysis',
-          details: 'Maximum 5000 characters allowed for real-time analysis'
+          details: 'Maximum 10,000 characters allowed for real-time analysis'
         }
       });
       return;
@@ -386,14 +386,13 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
   }, [cancelAnalysis]);
   
   /**
-   * Get analysis statistics for debugging
+   * Get analysis statistics
    */
   const getAnalysisStats = useCallback(() => {
     return {
       status: state.status,
       lastAnalyzedLength: state.lastAnalyzedContent.length,
       suggestionsCount: state.result?.totalSuggestions || 0,
-      processingTime: state.processingTimeMs,
       cacheHit: state.cacheHit,
       hasError: !!state.error
     };
@@ -431,11 +430,10 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
     clearResults,
     
     // Metadata
-    processingTimeMs: state.processingTimeMs,
     cacheHit: state.cacheHit,
     requestId: state.requestId,
     
-    // Debugging
+    // Statistics
     getAnalysisStats
   };
 } 

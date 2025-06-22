@@ -48,6 +48,8 @@ interface UseEditorWithSuggestionsReturn {
   suggestions: WritingSuggestion[];
   /** Analysis status */
   analysisStatus: 'idle' | 'analyzing' | 'complete' | 'error';
+  /** Current analysis result */
+  analysisResult?: import('@/types/realtimeAnalysis').RealtimeAnalysisResult;
   /** Accept a suggestion */
   acceptSuggestion: (suggestion: WritingSuggestion) => void;
   /** Reject a suggestion */
@@ -403,6 +405,7 @@ export function useEditorWithSuggestions({
     editor,
     suggestions,
     analysisStatus,
+    analysisResult: analysisResult || undefined,
     acceptSuggestion,
     rejectSuggestion,
     acceptAllSuggestionsOfType,

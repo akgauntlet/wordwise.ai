@@ -92,6 +92,10 @@ export interface RealtimeAnalysisResult {
   totalSuggestions: number;
   processingTimeMs: number;
   isLightweight: boolean;
+  /** Indicates if the content was truncated for analysis */
+  wasTruncated?: boolean;
+  /** Original content length before truncation */
+  originalLength?: number;
 }
 
 /**
@@ -134,13 +138,12 @@ export interface RealtimeAnalysisConfig {
 }
 
 /**
- * Analysis statistics for debugging
+ * Analysis statistics
  */
 export interface AnalysisStatistics {
   status: RealtimeAnalysisStatus;
   lastAnalyzedLength: number;
   suggestionsCount: number;
-  processingTime: number;
   cacheHit: boolean;
   hasError: boolean;
 }

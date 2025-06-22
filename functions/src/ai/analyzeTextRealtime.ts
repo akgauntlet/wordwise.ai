@@ -115,10 +115,17 @@ export const analyzeTextRealtime = onCall(
       // Validate request data with more lenient limits for real-time
       validateRealtimeRequest(content, options);
       
-      // Check rate limits (optimized for real-time with batched writes)
-      await checkRateLimit(userId, content.length, true);
+      // Handle very long content with intelligent truncation
+      const { truncatedContent, wasTruncated, originalLength } = intelligentContentTruncation(content, 10000);
       
-      // Calculate or use provided content hash
+      if (wasTruncated) {
+        console.log(`[RT-${requestId}] Content truncated from ${originalLength} to ${truncatedContent.length} characters for analysis`);
+      }
+      
+      // Check rate limits (optimized for real-time with batched writes)
+      await checkRateLimit(userId, truncatedContent.length, true);
+      
+      // Calculate or use provided content hash (use original content for hash consistency)
       const finalContentHash = contentHash || calculateContentHash(content, options);
       
       // Initialize OpenAI client
@@ -126,10 +133,10 @@ export const analyzeTextRealtime = onCall(
       
       // Generate lightweight prompts
       const systemPrompt = generateLightweightSystemPrompt(options);
-      const userPrompt = generateLightweightUserPrompt(content);
+      const userPrompt = generateLightweightUserPrompt(truncatedContent);
       
       console.log(`[RT-${requestId}] Sending lightweight request to OpenAI`);
-      console.log(`[RT-${requestId}] Request details: model=gpt-3.5-turbo, content_length=${content.length}`);
+      console.log(`[RT-${requestId}] Request details: model=gpt-3.5-turbo, content_length=${truncatedContent.length}${wasTruncated ? ` (truncated from ${originalLength})` : ''}`);
       
       // Call OpenAI API with optimized parameters for speed
       const completion = await openai.chat.completions.create({
@@ -139,7 +146,7 @@ export const analyzeTextRealtime = onCall(
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.1, // Very low temperature for maximum speed
-        max_tokens: 1000 // Further reduced for lightweight real-time analysis
+        max_tokens: Math.min(2000, Math.max(1000, Math.floor(truncatedContent.length / 3))) // Dynamic token allocation based on content length
       });
       
       const aiResponse = completion.choices[0]?.message?.content;
@@ -154,7 +161,7 @@ export const analyzeTextRealtime = onCall(
       const parsedResponse = parseAndValidateResponse(aiResponse);
       
       // Build the lightweight analysis result
-      const analysisResult: RealtimeAnalysisResult = {
+      const analysisResult: RealtimeAnalysisResult & { wasTruncated?: boolean; originalLength?: number } = {
         analysisId: requestId,
         timestamp: new Date(),
         contentHash: finalContentHash,
@@ -166,7 +173,8 @@ export const analyzeTextRealtime = onCall(
                          parsedResponse.styleSuggestions.length + 
                          parsedResponse.readabilitySuggestions.length,
         processingTimeMs: Date.now() - startTime,
-        isLightweight: true
+        isLightweight: true,
+        ...(wasTruncated && { wasTruncated: true, originalLength })
       };
       
       console.log(`[RT-${requestId}] Real-time analysis completed in ${analysisResult.processingTimeMs}ms`);
@@ -219,6 +227,52 @@ function generateRealtimeRequestId(): string {
 }
 
 /**
+ * Intelligently truncate content for analysis while preserving context
+ * 
+ * @param content - Original content
+ * @param maxLength - Maximum length allowed
+ * @returns Truncated content that preserves sentence boundaries
+ */
+function intelligentContentTruncation(content: string, maxLength: number): { 
+  truncatedContent: string; 
+  wasTruncated: boolean;
+  originalLength: number;
+} {
+  if (content.length <= maxLength) {
+    return { 
+      truncatedContent: content, 
+      wasTruncated: false,
+      originalLength: content.length
+    };
+  }
+  
+  // Try to truncate at sentence boundaries to preserve context
+  const sentences = content.split(/[.!?]+/);
+  let truncatedContent = '';
+  let currentLength = 0;
+  
+  for (const sentence of sentences) {
+    const sentenceWithPunctuation = sentence + (content[content.indexOf(sentence) + sentence.length] || '');
+    if (currentLength + sentenceWithPunctuation.length > maxLength * 0.9) { // Leave 10% buffer
+      break;
+    }
+    truncatedContent += sentenceWithPunctuation;
+    currentLength += sentenceWithPunctuation.length;
+  }
+  
+  // If we couldn't preserve sentence boundaries, do a hard truncate
+  if (truncatedContent.length === 0) {
+    truncatedContent = content.substring(0, maxLength * 0.9);
+  }
+  
+  return { 
+    truncatedContent: truncatedContent.trim(), 
+    wasTruncated: true,
+    originalLength: content.length
+  };
+}
+
+/**
  * Validate real-time analysis request with more lenient limits
  * 
  * @param content - Text content to analyze
@@ -239,11 +293,11 @@ function validateRealtimeRequest(content: string, options: AnalysisOptions): voi
     );
   }
   
-  // More lenient limit for real-time analysis (5000 vs 10000 for full analysis)
-  if (content.length > 5000) {
+  // Increased limit for real-time analysis to handle longer documents (10000 vs 5000)
+  if (content.length > 10000) {
     throw new HttpsError(
       'invalid-argument',
-      'Content too long for real-time analysis. Maximum 5000 characters.'
+      'Content too long for real-time analysis. Maximum 10,000 characters.'
     );
   }
   

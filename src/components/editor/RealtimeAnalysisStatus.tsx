@@ -50,12 +50,14 @@ interface RealtimeAnalysisStatusProps {
   status: AnalysisStatus;
   /** Number of suggestions found */
   suggestionsCount?: number;
-  /** Processing time in milliseconds */
-  processingTime?: number;
   /** Error message if status is error */
   error?: string;
   /** Whether the result came from cache */
   cacheHit?: boolean;
+  /** Whether content was truncated for analysis */
+  wasTruncated?: boolean;
+  /** Original content length before truncation */
+  originalLength?: number;
   /** Function to retry analysis */
   onRetry?: () => void;
   /** Function to cancel analysis */
@@ -74,9 +76,10 @@ interface RealtimeAnalysisStatusProps {
 export function RealtimeAnalysisStatus({
   status,
   suggestionsCount = 0,
-  processingTime,
   error,
   cacheHit = false,
+  wasTruncated = false,
+  originalLength,
   onRetry,
   onCancel
 }: RealtimeAnalysisStatusProps) {
@@ -172,12 +175,16 @@ export function RealtimeAnalysisStatus({
         )}
       </div>
 
-      {/* Processing time */}
-      {status === 'complete' && processingTime && (
-        <span className="text-xs opacity-75">
-          {processingTime}ms
-        </span>
-      )}
+      {/* Truncation info */}
+      <div className="flex flex-col items-end text-right space-y-1">
+        {/* Truncation warning */}
+        {status === 'complete' && wasTruncated && originalLength && (
+          <div className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            <span>Content truncated ({originalLength.toLocaleString()} chars)</span>
+          </div>
+        )}
+      </div>
 
       {/* Error message */}
       {status === 'error' && error && (

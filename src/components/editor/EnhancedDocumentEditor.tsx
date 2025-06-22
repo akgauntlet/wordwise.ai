@@ -141,6 +141,7 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
     editor,
     suggestions,
     analysisStatus,
+    analysisResult,
     acceptSuggestion,
     rejectSuggestion,
     acceptAllSuggestionsOfType,
@@ -334,6 +335,9 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
                 <RealtimeAnalysisStatus 
                   status={analysisStatus}
                   suggestionsCount={suggestions.length}
+                  cacheHit={false} // This could be retrieved from analysisResult if available
+                  wasTruncated={analysisResult?.wasTruncated}
+                  originalLength={analysisResult?.originalLength}
                 />
               )}
             </div>
