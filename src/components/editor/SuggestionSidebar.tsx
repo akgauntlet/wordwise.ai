@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getSuggestionCategoryDisplay } from '@/lib/utils';
+import { getSuggestionCategoryDisplay, getDocumentSpecificCategoryDisplayName, getDocumentSpecificCategoryDescription } from '@/lib/utils';
 import { 
   BookOpen, 
   Pen, 
@@ -139,12 +139,27 @@ function SuggestionItem({
   onAccept: (suggestion: WritingSuggestion) => void;
   onReject: (suggestion: WritingSuggestion) => void;
 }) {
+  const hasDocumentSpecificCategory = suggestion.documentSpecificCategory;
+  const documentSpecificDisplayName = hasDocumentSpecificCategory 
+    ? getDocumentSpecificCategoryDisplayName(suggestion.documentSpecificCategory)
+    : null;
+  const documentSpecificDescription = hasDocumentSpecificCategory 
+    ? getDocumentSpecificCategoryDescription(suggestion.documentSpecificCategory)
+    : null;
+
+  // Check if suggestion has document-specific guidance
+
   return (
     <div className="border rounded-lg p-4 space-y-3 hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200 hover:shadow-sm">
       {/* Suggestion header */}
       <div className="flex items-start justify-between">
-        <div className="flex-1 text-left text-sm font-semibold text-neutral-800">
-          {getSuggestionCategoryDisplay(suggestion.type, suggestion.category)}
+        <div className="flex-1 text-left">
+          <div className="text-sm font-semibold text-neutral-800">
+            {hasDocumentSpecificCategory 
+              ? documentSpecificDisplayName 
+              : getSuggestionCategoryDisplay(suggestion.type, suggestion.category)
+            }
+          </div>
         </div>
         <Badge 
           variant="outline" 
@@ -154,11 +169,23 @@ function SuggestionItem({
         </Badge>
       </div>
 
-      {/* Explanation */}
-      <p className="text-xs text-neutral-600 line-clamp-2">
-        <span className="font-semibold">Explanation: </span>
-        {suggestion.explanation}
-      </p>
+      {/* Document-specific description (if available) */}
+      {hasDocumentSpecificCategory && documentSpecificDescription && (
+        <div className="bg-blue-50 border-l-4 border-blue-200 p-2 rounded-r mt-3">
+          <p className="text-xs text-blue-800 font-medium mb-1">{documentSpecificDescription}</p>
+          <p className="text-xs text-blue-700">
+            {suggestion.explanation}
+          </p>
+        </div>
+      )}
+
+      {/* Explanation (fallback for non-document-specific) */}
+      {!(hasDocumentSpecificCategory && documentSpecificDescription) && (
+        <p className="text-xs text-neutral-600 line-clamp-2">
+          <span className="font-semibold">Explanation: </span>
+          {suggestion.explanation}
+        </p>
+      )}
 
       {/* Original and suggested text */}
       <div className="space-y-1 text-xs">
@@ -177,7 +204,7 @@ function SuggestionItem({
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 mt-4">
         <Button
           onClick={() => onAccept(suggestion)}
           size="sm"

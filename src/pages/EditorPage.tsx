@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useDocument } from '@/hooks/document';
 import { PageErrorBoundary } from '@/components/layout';
 import { setActiveDocument } from '@/lib/utils';
+import { updateDocument } from '@/services/document/documentService';
 import type { TiptapContent, DocumentType } from '@/types/document';
 
 /**
@@ -91,7 +92,6 @@ function EditorPageContent() {
     // Save the document type change immediately using document service
     if (document && documentId) {
       try {
-        const { updateDocument } = await import('@/services/document/documentService');
         await updateDocument(documentId, { type: newType });
       } catch (error) {
         console.error('Failed to update document type:', error);

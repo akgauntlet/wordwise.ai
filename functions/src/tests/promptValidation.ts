@@ -80,7 +80,7 @@ export function runPromptValidationTests(): ValidationResult[] {
 
   // Test 3: Readability-only prompt validation
   console.log('Testing readability-only prompt...');
-  const readabilityPrompt = generateReadabilityPrompt('advanced', 'report');
+  const readabilityPrompt = generateReadabilityPrompt('advanced', 'academic');
   const readabilityValidation = validatePrompt(readabilityPrompt, REQUIRED_PROMPT_ELEMENTS.readability);
   
   results.push({
@@ -170,7 +170,7 @@ export function runPromptValidationTests(): ValidationResult[] {
 export function testPromptVariations(): ValidationResult[] {
   const results: ValidationResult[] = [];
   const audienceLevels = ['beginner', 'intermediate', 'advanced'];
-  const documentTypes = ['essay', 'email', 'letter', 'report'];
+  const documentTypes = ['essay', 'email', 'creative-writing', 'academic'];
 
   // Test different combinations
   for (const audienceLevel of audienceLevels) {
@@ -180,7 +180,7 @@ export function testPromptVariations(): ValidationResult[] {
         includeStyle: true,
         includeReadability: true,
         audienceLevel: audienceLevel as 'beginner' | 'intermediate' | 'advanced',
-        documentType: documentType as 'essay' | 'email' | 'letter' | 'report'
+        documentType: documentType as 'essay' | 'email' | 'creative-writing' | 'academic'
       };
 
       const prompt = generateComprehensiveSystemPrompt(options);
@@ -306,9 +306,9 @@ export function generateSamplePrompts() {
       description: 'Style improvement for intermediate academic writing'
     },
     readabilityFocused: {
-      system: generateReadabilityPrompt('advanced', 'report'),
+      system: generateReadabilityPrompt('advanced', 'academic'),
       user: generateUserPrompt(SAMPLE_TEXTS.readabilityIssues),
-      description: 'Readability analysis for advanced academic report'
+      description: 'Readability analysis for advanced academic document'
     },
     comprehensive: {
       system: generateComprehensiveSystemPrompt(EXAMPLE_ANALYSIS_OPTIONS.comprehensive),

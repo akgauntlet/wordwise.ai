@@ -14,6 +14,7 @@
  */
 
 import { 
+  BaseSuggestion,
   GrammarSuggestion, 
   StyleSuggestion, 
   ReadabilitySuggestion,
@@ -62,8 +63,22 @@ export function parseAndValidateResponse(response: string): ParsedResponse {
       cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1);
     }
     
+    // Debug logging - log the raw AI response
+    console.log('[DEBUG] Raw AI response:', response.substring(0, 500) + (response.length > 500 ? '...' : ''));
+    console.log('[DEBUG] Cleaned AI response:', cleanedResponse.substring(0, 500) + (cleanedResponse.length > 500 ? '...' : ''));
+    
     // Parse JSON directly - trust the simplified prompts
     const parsedData = JSON.parse(cleanedResponse);
+    
+    // Debug logging - check structure of parsed data
+    console.log('[DEBUG] Parsed data structure:', {
+      hasGrammarSuggestions: Array.isArray(parsedData.grammarSuggestions),
+      hasStyleSuggestions: Array.isArray(parsedData.styleSuggestions),
+      hasReadabilitySuggestions: Array.isArray(parsedData.readabilitySuggestions),
+      sampleGrammarSuggestion: parsedData.grammarSuggestions?.[0],
+      sampleStyleSuggestion: parsedData.styleSuggestions?.[0],
+      sampleReadabilitySuggestion: parsedData.readabilitySuggestions?.[0]
+    });
     
     // Fast extraction with minimal validation
     const result: ParsedResponse = {
@@ -108,7 +123,7 @@ function extractSuggestions(
         return null;
       }
       
-      const baseSuggestion = {
+      const baseSuggestion: BaseSuggestion = {
         id: String(obj.id),
         type,
         severity: validateSeverity(obj.severity),
@@ -118,6 +133,7 @@ function extractSuggestions(
         suggestedText: String(obj.suggestedText),
         explanation: String(obj.explanation || 'Improvement suggested'),
         category: String(obj.category || 'general'),
+        documentSpecificCategory: obj.documentSpecificCategory ? String(obj.documentSpecificCategory) : undefined,
         confidence: Math.min(1, Math.max(0, parseFloat(String(obj.confidence)) || 0.8))
       };
       

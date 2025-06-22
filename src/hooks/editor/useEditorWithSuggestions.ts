@@ -16,7 +16,7 @@ import { CharacterCount } from '@tiptap/extension-character-count';
 import { SuggestionExtension, type WritingSuggestion } from '@/components/editor/SuggestionExtension';
 import { IndentExtension } from '@/components/editor/IndentExtension';
 import { useRealtimeAnalysis } from './useRealtimeAnalysis';
-import type { TiptapContent } from '@/types/document';
+import type { TiptapContent, DocumentType } from '@/types/document';
 
 /**
  * Enhanced editor configuration options
@@ -28,6 +28,8 @@ interface UseEditorWithSuggestionsOptions {
   placeholder?: string;
   /** Whether the editor is editable */
   editable?: boolean;
+  /** Document type for specialized analysis */
+  documentType?: DocumentType;
   /** Callback when content changes */
   onUpdate?: (content: TiptapContent, plainText: string) => void;
   /** Callback when suggestion is clicked */
@@ -75,6 +77,7 @@ export function useEditorWithSuggestions({
   content = '',
   placeholder = DEFAULT_PLACEHOLDER,
   editable = true,
+  documentType = 'general',
   onUpdate,
   onSuggestionClick,
   enableRealtimeAnalysis = true
@@ -95,7 +98,7 @@ export function useEditorWithSuggestions({
       includeStyle: true,
       includeReadability: true,
       audienceLevel: 'intermediate',
-      documentType: 'essay'
+      documentType: documentType as 'essay' | 'creative-writing' | 'script' | 'general' | 'email' | 'academic' | 'business'
     }
   });
 

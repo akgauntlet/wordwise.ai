@@ -18,7 +18,7 @@ export interface AnalysisOptions {
   includeStyle: boolean;
   includeReadability: boolean;
   audienceLevel?: 'beginner' | 'intermediate' | 'advanced';
-  documentType?: 'essay' | 'email' | 'letter' | 'report' | 'other';
+  documentType?: 'essay' | 'creative-writing' | 'script' | 'general' | 'email' | 'academic' | 'business';
 }
 
 /**
@@ -34,6 +34,7 @@ interface BaseSuggestion {
   suggestedText: string;
   explanation: string;
   category: string;
+  documentSpecificCategory?: string;
   confidence: number;
 }
 

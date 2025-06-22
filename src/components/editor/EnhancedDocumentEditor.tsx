@@ -147,6 +147,7 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
     rejectAllSuggestionsOfType
   } = useEditorWithSuggestions({
     content: initialContent,
+    documentType: documentType as DocumentType,
     editable: !readOnly,
     onUpdate: handleContentUpdate,
     onSuggestionClick: handleSuggestionClick,

@@ -15,9 +15,10 @@ import {
   X, 
   BookOpen, 
   Pen, 
-  BarChart3
+  BarChart3,
+  FileText
 } from 'lucide-react';
-import { getSuggestionCategoryDisplay } from '@/lib/utils';
+import { getSuggestionCategoryDisplay, getDocumentSpecificCategoryDisplayName, getDocumentSpecificCategoryDescription } from '@/lib/utils';
 import type { WritingSuggestion } from './SuggestionExtension';
 
 /**
@@ -142,6 +143,14 @@ export function SuggestionPopover({
   const Icon = getSuggestionIcon(suggestion.type);
   const colors = getSuggestionColors(suggestion.type);
 
+  const hasDocumentSpecificCategory = suggestion.documentSpecificCategory;
+  const documentSpecificDisplayName = hasDocumentSpecificCategory 
+    ? getDocumentSpecificCategoryDisplayName(suggestion.documentSpecificCategory)
+    : null;
+  const documentSpecificDescription = hasDocumentSpecificCategory 
+    ? getDocumentSpecificCategoryDescription(suggestion.documentSpecificCategory)
+    : null;
+
   /**
    * Handle accepting the suggestion
    */
@@ -171,11 +180,16 @@ export function SuggestionPopover({
       <Card className="w-80 shadow-lg animate-in fade-in-0 zoom-in-95 duration-200">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-1">
               <Icon className={`h-4 w-4 ${colors.icon}`} />
-              <CardTitle className="text-base font-semibold">
-                {getSuggestionCategoryDisplay(suggestion.type, suggestion.category)}
-              </CardTitle>
+              <div className="flex-1">
+                <CardTitle className="text-base font-semibold">
+                  {hasDocumentSpecificCategory 
+                    ? documentSpecificDisplayName 
+                    : getSuggestionCategoryDisplay(suggestion.type, suggestion.category)
+                  }
+                </CardTitle>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Badge 
@@ -197,13 +211,30 @@ export function SuggestionPopover({
         </CardHeader>
 
         <CardContent className="pt-0">
-          {/* Explanation */}
-          <div className="mb-4">
-            <p className="text-sm text-neutral-700">
-              <span className="font-semibold">Explanation: </span>
-              {suggestion.explanation}
-            </p>
-          </div>
+          {/* Document-specific description (if available) */}
+          {hasDocumentSpecificCategory && documentSpecificDescription && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 mt-3">
+              <div className="flex items-start gap-2">
+                <FileText className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-blue-800 mb-1">{documentSpecificDescription}</p>
+                  <p className="text-sm text-blue-700">
+                    {suggestion.explanation}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Explanation (fallback for non-document-specific) */}
+          {!(hasDocumentSpecificCategory && documentSpecificDescription) && (
+            <div className="mb-4">
+              <p className="text-sm text-neutral-700">
+                <span className="font-semibold">Explanation: </span>
+                {suggestion.explanation}
+              </p>
+            </div>
+          )}
 
           {/* Original and suggested text */}
           <div className="space-y-3">
@@ -222,7 +253,7 @@ export function SuggestionPopover({
           </div>
 
           {/* Action buttons */}
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 mt-6">
             <Button
               onClick={handleAccept}
               className={`flex-1 text-white ${colors.button}`}

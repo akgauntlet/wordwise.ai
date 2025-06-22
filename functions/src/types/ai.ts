@@ -29,7 +29,7 @@ export interface AnalysisOptions {
   /** Target audience level for analysis (beginner, intermediate, advanced) */
   audienceLevel?: 'beginner' | 'intermediate' | 'advanced';
   /** Document type context for better analysis */
-  documentType?: 'essay' | 'email' | 'letter' | 'report' | 'other';
+  documentType?: 'essay' | 'creative-writing' | 'script' | 'general' | 'email' | 'academic' | 'business';
 }
 
 /**
@@ -92,6 +92,8 @@ export interface BaseSuggestion {
   explanation: string;
   /** Category of the suggestion (e.g., "subject-verb agreement") */
   category: string;
+  /** Document-type-specific category for specialized suggestions */
+  documentSpecificCategory?: string;
   /** Confidence score from AI analysis (0-1) */
   confidence: number;
 }

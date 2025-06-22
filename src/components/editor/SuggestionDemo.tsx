@@ -22,6 +22,7 @@ const mockSuggestions: WritingSuggestion[] = [
     suggestedText: 'students go',
     explanation: 'Subject-verb agreement error: plural subject requires plural verb',
     category: 'subject-verb agreement',
+    documentSpecificCategory: 'basic-grammar-rules',
     confidence: 0.95,
     grammarRule: 'Subject-Verb Agreement',
     eslExplanation: 'When the subject is plural, the verb must also be plural.'
@@ -36,6 +37,7 @@ const mockSuggestions: WritingSuggestion[] = [
     suggestedText: 'The evidence suggests',
     explanation: 'Replace uncertain language with confident academic phrasing',
     category: 'academic tone',
+    documentSpecificCategory: 'thesis-clarity',
     confidence: 0.88,
     styleCategory: 'formality',
     impact: 'high'
@@ -50,9 +52,25 @@ const mockSuggestions: WritingSuggestion[] = [
     suggestedText: 'multiple methods from different fields',
     explanation: 'Simplify complex academic jargon for better clarity',
     category: 'word complexity',
+    documentSpecificCategory: 'word-choice-precision',
     confidence: 0.92,
     metric: 'word-complexity',
     targetLevel: 'Grade 14'
+  },
+  {
+    id: 'creative_1',
+    type: 'style',
+    severity: 'medium',
+    startOffset: 85,
+    endOffset: 105,
+    originalText: 'The character said angrily',
+    suggestedText: 'The character slammed the door',
+    explanation: 'Show the emotion through action instead of telling with adverbs',
+    category: 'style',
+    documentSpecificCategory: 'show-vs-tell',
+    confidence: 0.90,
+    styleCategory: 'clarity',
+    impact: 'high'
   }
 ];
 
@@ -111,6 +129,13 @@ export function SuggestionDemo() {
                 The quick <span className="suggestion-grammar cursor-pointer">students goes</span> to 
                 <span className="suggestion-style cursor-pointer ml-1">I think that maybe</span> the 
                 <span className="suggestion-readability cursor-pointer ml-1">multifaceted interdisciplinary approach</span> is best.
+                <span className="suggestion-style cursor-pointer ml-1">The character said angrily</span> as they left.
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground">
+                <p>✨ Now with <strong>document-specific guidance</strong>!</p>
+                <p>• Grammar suggestions include fundamental writing rules</p>
+                <p>• Academic suggestions focus on thesis clarity</p>
+                <p>• Creative writing suggestions emphasize show vs. tell</p>
               </div>
               <Button onClick={handleShowPopover} className="mt-2" size="sm">
                 Show Sample Popover

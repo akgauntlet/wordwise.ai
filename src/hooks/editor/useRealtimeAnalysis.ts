@@ -239,6 +239,8 @@ export function useRealtimeAnalysis(config: UseRealtimeAnalysisConfig) {
       if (responseData.success && responseData.data) {
         const result = responseData.data;
         
+        // Analysis result received successfully
+        
         // Cache the result if enabled
         if (fullConfig.enableCaching) {
           setToCache(contentHash, result, fullConfig.cacheTtlHours);

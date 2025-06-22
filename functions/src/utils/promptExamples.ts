@@ -21,7 +21,8 @@ import {
   generateGrammarPrompt,
   generateStylePrompt,
   generateReadabilityPrompt,
-  generateUserPrompt
+  generateUserPrompt,
+  generateDocumentSpecificSystemPrompt
 } from './promptTemplates';
 
 /**
@@ -65,8 +66,8 @@ export const EXAMPLE_ANALYSIS_OPTIONS: Record<string, AnalysisOptions> = {
     includeGrammar: true,
     includeStyle: false,
     includeReadability: false,
-    audienceLevel: 'beginner',
-    documentType: 'essay'
+    audienceLevel: 'beginner' as const,
+    documentType: 'essay' as const
   },
 
   /**
@@ -76,8 +77,8 @@ export const EXAMPLE_ANALYSIS_OPTIONS: Record<string, AnalysisOptions> = {
     includeGrammar: false,
     includeStyle: true,
     includeReadability: false,
-    audienceLevel: 'intermediate',
-    documentType: 'essay'
+    audienceLevel: 'intermediate' as const,
+    documentType: 'business' as const
   },
 
   /**
@@ -87,8 +88,8 @@ export const EXAMPLE_ANALYSIS_OPTIONS: Record<string, AnalysisOptions> = {
     includeGrammar: false,
     includeStyle: false,
     includeReadability: true,
-    audienceLevel: 'advanced',
-    documentType: 'report'
+    audienceLevel: 'advanced' as const,
+    documentType: 'academic' as const
   },
 
   /**
@@ -98,8 +99,8 @@ export const EXAMPLE_ANALYSIS_OPTIONS: Record<string, AnalysisOptions> = {
     includeGrammar: true,
     includeStyle: true,
     includeReadability: true,
-    audienceLevel: 'intermediate',
-    documentType: 'essay'
+    audienceLevel: 'intermediate' as const,
+    documentType: 'general' as const
   },
 
   /**
@@ -121,7 +122,7 @@ export const EXAMPLE_ANALYSIS_OPTIONS: Record<string, AnalysisOptions> = {
     includeStyle: true,
     includeReadability: true,
     audienceLevel: 'advanced',
-    documentType: 'report'
+    documentType: 'academic'
   }
 };
 
@@ -159,7 +160,7 @@ export function generateSpecializedPromptExamples() {
       description: 'Style improvement analysis for intermediate students'
     },
     readability: {
-      prompt: generateReadabilityPrompt('advanced', 'report'),
+      prompt: generateReadabilityPrompt('advanced', 'academic'),
       sampleText: SAMPLE_TEXTS.readabilityIssues,
       description: 'Readability analysis for advanced academic writing'
     }
@@ -378,4 +379,49 @@ export const REQUIRED_PROMPT_ELEMENTS = {
     'startOffset',
     'endOffset'
   ]
-}; 
+};
+
+/**
+ * Test example for document-type-specific prompts
+ */
+export function testDocumentSpecificPrompts() {
+  console.log('=== Document-Type-Specific Prompt Test ===\n');
+  
+  const testOptions = [
+    { documentType: 'creative-writing', name: 'Creative Writing' },
+    { documentType: 'academic', name: 'Academic Paper' },
+    { documentType: 'business', name: 'Business Document' },
+    { documentType: 'script', name: 'Script' },
+    { documentType: 'email', name: 'Email' }
+  ];
+  
+  testOptions.forEach(({ documentType, name }) => {
+    console.log(`--- ${name} ---`);
+    const options = {
+      includeGrammar: true,
+      includeStyle: true,
+      includeReadability: true,
+      audienceLevel: 'intermediate' as const,
+      documentType: documentType as 'essay' | 'creative-writing' | 'script' | 'general' | 'email' | 'academic' | 'business'
+    };
+    
+    const prompt = generateDocumentSpecificSystemPrompt(options);
+    
+    // Extract just the key parts for readability
+    const lines = prompt.split('\n');
+    const systemLine = lines[0];
+    const instructionsStart = lines.findIndex(line => line.includes('For ' + documentType));
+    const categoriesStart = lines.findIndex(line => line.includes('pay special attention'));
+    
+    console.log(`System: ${systemLine}`);
+    if (instructionsStart !== -1) {
+      console.log(`Instructions: ${lines[instructionsStart]}`);
+    }
+    if (categoriesStart !== -1) {
+      console.log(`Categories: ${lines[categoriesStart]}`);
+    }
+    console.log('');
+  });
+  
+  return 'Document-type-specific prompts test completed';
+} 
