@@ -6,7 +6,7 @@
  * Usage: Provides formatting controls for the text editor
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -48,50 +48,106 @@ interface EditorToolbarProps {
 }
 
 /**
+ * Normalize URL to ensure it has a proper protocol
+ * 
+ * @param url Input URL string
+ * @returns Normalized URL with protocol
+ */
+function normalizeUrl(url: string): string {
+  const trimmedUrl = url.trim();
+  
+  // If already has protocol, return as is
+  if (/^https?:\/\//i.test(trimmedUrl)) {
+    return trimmedUrl;
+  }
+  
+  // If starts with //, add https:
+  if (/^\/\//.test(trimmedUrl)) {
+    return `https:${trimmedUrl}`;
+  }
+  
+  // For email addresses, use mailto:
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedUrl)) {
+    return `mailto:${trimmedUrl}`;
+  }
+  
+  // For everything else, assume https://
+  return `https://${trimmedUrl}`;
+}
+
+/**
  * Link dialog component for adding/editing links
  */
 function LinkDialog({ 
   isOpen, 
   onClose, 
   onSubmit, 
-  initialUrl = '' 
+  initialUrl = '',
+  initialDisplayText = '' 
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (url: string) => void;
+  onSubmit: (url: string, displayText: string) => void;
   initialUrl?: string;
+  initialDisplayText?: string;
 }) {
   const [url, setUrl] = useState(initialUrl);
+  const [displayText, setDisplayText] = useState(initialDisplayText);
+
+  // Update state when props change
+  useEffect(() => {
+    setUrl(initialUrl);
+    setDisplayText(initialDisplayText);
+  }, [initialUrl, initialDisplayText]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (url.trim()) {
-      onSubmit(url.trim());
+      onSubmit(url.trim(), displayText.trim());
     }
     onClose();
   };
 
+  // Get normalized URL for preview
+  const normalizedUrl = url.trim() ? normalizeUrl(url.trim()) : '';
+  const showPreview = url.trim() && normalizedUrl !== url.trim();
+
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-full left-0 mt-2 p-4 bg-background border rounded-md shadow-lg z-50 min-w-[300px]">
+    <div className="absolute top-full left-0 mt-2 p-4 bg-background border rounded-md shadow-lg z-50 min-w-[350px]">
       <form onSubmit={handleSubmit} className="space-y-3">
+        <div>
+          <label htmlFor="link-display-text" className="text-sm font-medium">Display Text</label>
+          <Input
+            id="link-display-text"
+            type="text"
+            placeholder="Text to display for the link"
+            value={displayText}
+            onChange={(e) => setDisplayText(e.target.value)}
+            autoFocus
+          />
+        </div>
         <div>
           <label htmlFor="link-url" className="text-sm font-medium">URL</label>
           <Input
             id="link-url"
-            type="url"
-            placeholder="https://example.com"
+            type="text"
+            placeholder="Enter any URL..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            autoFocus
           />
+          {showPreview && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Will link to: <span className="text-blue-600">{normalizedUrl}</span>
+            </p>
+          )}
         </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" size="sm" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" size="sm">
+          <Button type="submit" size="sm" disabled={!url.trim()}>
             Apply
           </Button>
         </div>
@@ -154,14 +210,10 @@ export function EditorToolbar({
   };
 
   /**
-   * Handle link URL submission
+   * Handle link URL and display text submission
    */
-  const handleLinkSubmit = (url: string) => {
-    let finalUrl = url;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      finalUrl = `https://${url}`;
-    }
-    commands.setLink(finalUrl);
+  const handleLinkSubmit = (url: string, displayText: string) => {
+    commands.setLink(url, displayText);
   };
 
   /**
@@ -170,6 +222,23 @@ export function EditorToolbar({
   const getCurrentLink = (): string => {
     const { href } = editor.getAttributes('link');
     return href || '';
+  };
+
+  /**
+   * Get selected text or current link text for display text field
+   */
+  const getInitialDisplayText = (): string => {
+    const selectedText = commands.getSelectedText();
+    if (selectedText) {
+      return selectedText;
+    }
+    
+    // If editing an existing link, get the link text
+    if (commands.isActive('link')) {
+      return selectedText || '';
+    }
+    
+    return '';
   };
 
   return (
@@ -330,7 +399,11 @@ export function EditorToolbar({
             variant={commands.isActive('link') ? 'default' : 'ghost'}
             size="sm"
             onClick={handleLinkClick}
-            title={commands.isActive('link') ? 'Remove Link' : 'Add Link'}
+            title={
+              commands.isActive('link') 
+                ? 'Remove Link' 
+                : 'Add Link (Ctrl+Click links to open them)'
+            }
           >
             {commands.isActive('link') ? (
               <Unlink className="h-4 w-4" />
@@ -361,6 +434,7 @@ export function EditorToolbar({
         onClose={() => setShowLinkDialog(false)}
         onSubmit={handleLinkSubmit}
         initialUrl={getCurrentLink()}
+        initialDisplayText={getInitialDisplayText()}
       />
     </div>
   );

@@ -2,7 +2,7 @@
  * @fileoverview Editor page component
  * @module pages/EditorPage
  * 
- * Dependencies: React, DocumentEditor, Firebase
+ * Dependencies: React, EnhancedDocumentEditor, Firebase
  * Usage: Main editor page route with document management
  */
 

@@ -33,42 +33,48 @@ const RESPONSE_FORMAT_TEMPLATE = `
 
 Return valid JSON only:
 {
-  "grammarSuggestions": [{
-    "id": "unique_id",
-    "type": "grammar",
-    "severity": "low|medium|high",
-    "startOffset": 0,
-    "endOffset": 5,
-    "originalText": "text",
-    "suggestedText": "fixed text",
-    "explanation": "Brief explanation",
-    "category": "grammar",
-    "confidence": 0.9
-  }],
-  "styleSuggestions": [{
-    "id": "unique_id", 
-    "type": "style",
-    "severity": "low|medium|high",
-    "startOffset": 0,
-    "endOffset": 5,
-    "originalText": "text",
-    "suggestedText": "improved text", 
-    "explanation": "Brief explanation",
-    "category": "style",
-    "confidence": 0.8
-  }],
-  "readabilitySuggestions": [{
-    "id": "unique_id",
-    "type": "readability", 
-    "severity": "low|medium|high",
-    "startOffset": 0,
-    "endOffset": 5,
-    "originalText": "text",
-    "suggestedText": "simpler text",
-    "explanation": "Brief explanation", 
-    "category": "readability",
-    "confidence": 0.7
-  }],
+  "grammarSuggestions": [
+    {
+      "id": "unique_id",
+      "type": "grammar",
+      "severity": "low|medium|high",
+      "startOffset": 0,
+      "endOffset": 5,
+      "originalText": "text",
+      "suggestedText": "fixed text",
+      "explanation": "Brief explanation",
+      "category": "grammar",
+      "confidence": 0.9
+    }
+  ],
+  "styleSuggestions": [
+    {
+      "id": "unique_id", 
+      "type": "style",
+      "severity": "low|medium|high",
+      "startOffset": 0,
+      "endOffset": 5,
+      "originalText": "text",
+      "suggestedText": "improved text", 
+      "explanation": "Brief explanation",
+      "category": "style",
+      "confidence": 0.8
+    }
+  ],
+  "readabilitySuggestions": [
+    {
+      "id": "unique_id",
+      "type": "readability", 
+      "severity": "low|medium|high",
+      "startOffset": 0,
+      "endOffset": 5,
+      "originalText": "text",
+      "suggestedText": "simpler text",
+      "explanation": "Brief explanation", 
+      "category": "readability",
+      "confidence": 0.7
+    }
+  ],
   "readabilityMetrics": {
     "fleschScore": 50,
     "gradeLevel": 12,
@@ -78,7 +84,9 @@ Return valid JSON only:
     "sentenceCount": 5,
     "complexWordsPercent": 15
   }
-}`;
+}
+
+Provide actual suggestions when issues are found. Return empty arrays only if no issues exist.`;
 /**
  * Simplified grammar analysis template
  */
@@ -215,7 +223,7 @@ function generateUserPrompt(content, specificInstructions) {
 }
 // Simplified lightweight prompts for real-time analysis
 function generateLightweightSystemPrompt(options) {
-    let prompt = `Quick writing analysis. Return JSON with top 5 suggestions per category.`;
+    let prompt = `You are a writing assistant for ESL students. Perform quick text analysis and provide helpful suggestions.`;
     const checks = [];
     if (options.includeGrammar)
         checks.push('grammar');
@@ -224,24 +232,67 @@ function generateLightweightSystemPrompt(options) {
     if (options.includeReadability)
         checks.push('readability');
     if (checks.length > 0) {
-        prompt += ` Check: ${checks.join(', ')}.`;
+        prompt += ` Analyze for: ${checks.join(', ')}.`;
     }
     prompt += `
 
+Find actual issues in the text and provide specific suggestions. Return JSON format:
+
 {
-  "grammarSuggestions": [],
-  "styleSuggestions": [],
-  "readabilitySuggestions": [],
+  "grammarSuggestions": [
+    {
+      "id": "1",
+      "type": "grammar", 
+      "severity": "medium",
+      "startOffset": 0,
+      "endOffset": 4,
+      "originalText": "This",
+      "suggestedText": "These",
+      "explanation": "Subject-verb agreement: use 'These' with plural nouns",
+      "category": "grammar",
+      "confidence": 0.9
+    }
+  ],
+  "styleSuggestions": [
+    {
+      "id": "2",
+      "type": "style",
+      "severity": "low", 
+      "startOffset": 10,
+      "endOffset": 20,
+      "originalText": "very good",
+      "suggestedText": "excellent",
+      "explanation": "Use more precise vocabulary",
+      "category": "style",
+      "confidence": 0.8
+    }
+  ],
+  "readabilitySuggestions": [
+    {
+      "id": "3",
+      "type": "readability",
+      "severity": "low",
+      "startOffset": 25,
+      "endOffset": 50,
+      "originalText": "extremely complicated sentence",
+      "suggestedText": "complex sentence", 
+      "explanation": "Simplify word choice for better readability",
+      "category": "readability",
+      "confidence": 0.7
+    }
+  ],
   "readabilityMetrics": {
-    "fleschScore": 50,
-    "gradeLevel": 12,
-    "avgSentenceLength": 15,
-    "avgSyllablesPerWord": 1.5,
-    "wordCount": 0,
-    "sentenceCount": 0,
-    "complexWordsPercent": 15
+    "fleschScore": 65,
+    "gradeLevel": 8,
+    "avgSentenceLength": 12,
+    "avgSyllablesPerWord": 1.4,
+    "wordCount": 25,
+    "sentenceCount": 2,
+    "complexWordsPercent": 10
   }
-}`;
+}
+
+Return up to 5 suggestions per category. If no issues found, return empty arrays.`;
     return prompt;
 }
 function generateLightweightUserPrompt(content) {

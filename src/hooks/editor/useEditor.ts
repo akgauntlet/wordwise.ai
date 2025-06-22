@@ -1,128 +1,39 @@
 /**
- * @fileoverview Custom hook for Tiptap editor initialization and management
- * @module hooks/editor/useEditor
+ * @fileoverview Editor commands and utilities for Tiptap editor instances
+ * @module hooks/editor/useEditorCommands
  * 
- * Dependencies: Tiptap React, Tiptap extensions
- * Usage: Provides configured Tiptap editor instance with rich formatting capabilities
+ * Dependencies: Tiptap React
+ * Usage: Provides command utilities for any Tiptap editor instance
  */
 
-import { useEditor as useTiptapEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import { Link } from '@tiptap/extension-link';
-import { Underline } from '@tiptap/extension-underline';
-import { Placeholder } from '@tiptap/extension-placeholder';
-import { CharacterCount } from '@tiptap/extension-character-count';
-import { IndentExtension } from '@/components/editor/IndentExtension';
-import type { TiptapContent } from '@/types/document';
+import type { Editor } from '@tiptap/react';
 
 /**
- * Editor configuration options
- */
-interface UseEditorOptions {
-  /** Initial content for the editor */
-  content?: TiptapContent | string;
-  /** Placeholder text when editor is empty */
-  placeholder?: string;
-  /** Whether the editor is editable */
-  editable?: boolean;
-  /** Callback when content changes */
-  onUpdate?: (content: TiptapContent, plainText: string) => void;
-}
-
-/**
- * Default placeholder text for ESL students
- */
-const DEFAULT_PLACEHOLDER = "Start writing your essay here... Remember to check your grammar and word choice as you type!";
-
-/**
- * Custom hook for Tiptap editor with rich formatting
+ * Normalize URL to ensure it has a proper protocol
  * 
- * @param options Editor configuration options
- * @returns Configured Tiptap editor instance
- * 
- * @example
- * ```tsx
- * const editor = useEditor({
- *   content: document.content,
- *   onUpdate: (content, plainText) => {
- *     // Handle content changes
- *   }
- * });
- * ```
+ * @param url Input URL string
+ * @returns Normalized URL with protocol
  */
-export function useEditor({
-  content = '',
-  placeholder = DEFAULT_PLACEHOLDER,
-  editable = true,
-  onUpdate
-}: UseEditorOptions = {}) {
-  const editor = useTiptapEditor({
-    extensions: [
-      // Core extensions
-      StarterKit.configure({
-        // Configure heading levels
-        heading: {
-          levels: [1, 2, 3, 4, 5, 6],
-        },
-      }),
-      
-      // Custom extensions for rich formatting
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-blue-600 underline hover:text-blue-800 cursor-pointer',
-        },
-      }),
-      
-      Underline,
-      
-      Placeholder.configure({
-        placeholder,
-        emptyEditorClass: 'is-editor-empty',
-      }),
-      
-      CharacterCount,
-      
-      // Indent extension for Tab key handling
-      IndentExtension.configure({
-        types: ['heading', 'paragraph'],
-        defaultIndentLevel: 0,
-        indentStep: 30,
-        maxIndentLevel: 8,
-      }),
-    ],
-    
-    content,
-    editable,
-    
-    onUpdate: ({ editor }) => {
-      if (onUpdate) {
-        const content = editor.getJSON() as TiptapContent;
-        const plainText = editor.getText();
-        onUpdate(content, plainText);
-      }
-    },
-    
-    editorProps: {
-      attributes: {
-        class: `
-          prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none max-w-none
-          prose-headings:font-bold prose-headings:text-foreground
-          prose-p:text-foreground prose-p:leading-relaxed
-          prose-strong:text-foreground prose-strong:font-semibold
-          prose-em:text-foreground prose-em:italic
-          prose-code:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:rounded
-          prose-blockquote:text-muted-foreground prose-blockquote:border-l-4 prose-blockquote:border-border prose-blockquote:pl-4
-          prose-ul:text-foreground prose-ol:text-foreground
-          prose-li:text-foreground prose-li:marker:text-muted-foreground
-          prose-a:text-blue-600 prose-a:no-underline hover:prose-a:text-blue-800
-          min-h-[400px] py-6 px-10
-        `.replace(/\s+/g, ' ').trim(),
-      },
-    },
-  });
-
-  return editor;
+function normalizeUrl(url: string): string {
+  const trimmedUrl = url.trim();
+  
+  // If already has protocol, return as is
+  if (/^https?:\/\//i.test(trimmedUrl)) {
+    return trimmedUrl;
+  }
+  
+  // If starts with //, add https:
+  if (/^\/\//.test(trimmedUrl)) {
+    return `https:${trimmedUrl}`;
+  }
+  
+  // For email addresses, use mailto:
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedUrl)) {
+    return `mailto:${trimmedUrl}`;
+  }
+  
+  // For everything else, assume https://
+  return `https://${trimmedUrl}`;
 }
 
 /**
@@ -131,7 +42,7 @@ export function useEditor({
  * @param editor Tiptap editor instance
  * @returns Object with common editor commands and state
  */
-export function useEditorCommands(editor: ReturnType<typeof useEditor>) {
+export function useEditorCommands(editor: Editor | null) {
   if (!editor) {
     return {
       isActive: () => false,
@@ -146,6 +57,7 @@ export function useEditorCommands(editor: ReturnType<typeof useEditor>) {
       toggleBlockquote: () => {},
       setLink: () => {},
       unsetLink: () => {},
+      getSelectedText: () => '',
       canUndo: false,
       canRedo: false,
       undo: () => {},
@@ -174,9 +86,46 @@ export function useEditorCommands(editor: ReturnType<typeof useEditor>) {
     toggleCodeBlock: () => editor.chain().focus().toggleCodeBlock().run(),
     
     // Link commands
-    setLink: (url: string) => 
-      editor.chain().focus().setLink({ href: url }).run(),
+    setLink: (url: string, displayText?: string) => {
+      const { from, to } = editor.state.selection;
+      const selectedText = editor.state.doc.textBetween(from, to, '');
+      
+      if (displayText && displayText.trim()) {
+        if (selectedText) {
+          // If there's selected text and display text is provided, replace selection with display text and link
+          return editor.chain().focus().deleteSelection().insertContent({
+            type: 'text',
+            text: displayText,
+            marks: [{ type: 'link', attrs: { href: normalizeUrl(url) } }]
+          }).run();
+        } else {
+          // If no selection but display text is provided, insert display text with link
+          return editor.chain().focus().insertContent({
+            type: 'text',
+            text: displayText,
+            marks: [{ type: 'link', attrs: { href: normalizeUrl(url) } }]
+          }).run();
+        }
+      } else {
+        // If no display text, set link on current selection (or insert URL as text if no selection)
+        if (selectedText) {
+          return editor.chain().focus().setLink({ href: normalizeUrl(url) }).run();
+        } else {
+          return editor.chain().focus().insertContent({
+            type: 'text',
+            text: normalizeUrl(url),
+            marks: [{ type: 'link', attrs: { href: normalizeUrl(url) } }]
+          }).run();
+        }
+      }
+    },
     unsetLink: () => editor.chain().focus().unsetLink().run(),
+    
+    // Text selection
+    getSelectedText: () => {
+      const { from, to } = editor.state.selection;
+      return editor.state.doc.textBetween(from, to, '');
+    },
     
     // History
     canUndo: editor.can().undo(),

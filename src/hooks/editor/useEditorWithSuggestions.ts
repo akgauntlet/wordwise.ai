@@ -121,10 +121,13 @@ export function useEditorWithSuggestions({
       
       // Rich formatting extensions
       Link.configure({
-        openOnClick: false,
+        openOnClick: true,
         HTMLAttributes: {
-          class: 'text-blue-600 underline hover:text-blue-800 cursor-pointer',
+          class: 'text-blue-600 underline hover:text-blue-800 hover:bg-blue-50 hover:shadow-sm cursor-pointer transition-all duration-150 rounded px-1 py-0.5',
+          target: '_blank',
+          rel: 'noopener noreferrer',
         },
+        validate: href => /^https?:\/\/|^mailto:/.test(href),
       }),
       
       Underline,
