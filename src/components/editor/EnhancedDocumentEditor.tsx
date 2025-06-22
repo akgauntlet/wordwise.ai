@@ -22,7 +22,7 @@ import { DocumentExportDialog } from './DocumentExportDialog';
 import { useEditorWithSuggestions } from '@/hooks/editor';
 import { calculateSmartPopoverPosition } from '@/utils/popoverPositioning';
 import { exportService } from '@/services/document/exportService';
-import type { TiptapContent, ExportFileFormat, ExportOptions } from '@/types/document';
+import type { TiptapContent, DocumentType, ExportFileFormat, ExportOptions } from '@/types/document';
 import type { WritingSuggestion } from './SuggestionExtension';
 
 /**
@@ -35,6 +35,8 @@ interface EnhancedDocumentEditorProps {
   initialContent?: TiptapContent | string;
   /** Document title */
   title?: string;
+  /** Document type */
+  documentType?: DocumentType;
   /** Target word count for progress tracking */
   targetWords?: number;
   /** Whether to show the suggestion sidebar */
@@ -45,6 +47,8 @@ interface EnhancedDocumentEditorProps {
   onContentChange?: (content: TiptapContent, plainText: string) => void;
   /** Callback when title changes */
   onTitleChange?: (newTitle: string) => void;
+  /** Callback when document type changes */
+  onDocumentTypeChange?: (newType: DocumentType) => void;
   /** Callback for auto-save */
   onAutoSave?: (content: TiptapContent, plainText: string) => Promise<void>;
   /** External save status from useDocument hook */
@@ -87,11 +91,13 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
   documentId,
   initialContent = '',
   title = 'Untitled Document',
+  documentType = 'general',
   targetWords = 500,
   showSuggestionSidebar = true,
   readOnly = false,
   onContentChange,
   onTitleChange,
+  onDocumentTypeChange,
   onAutoSave,
   saveStatus = 'saved',
   className = ''
@@ -347,7 +353,14 @@ export const EnhancedDocumentEditor = memo(function EnhancedDocumentEditor({
         {/* Main editor */}
         <Card className="overflow-hidden">
           {/* Toolbar */}
-          {!readOnly && <EditorToolbar editor={editor} />}
+          {!readOnly && (
+            <EditorToolbar 
+              editor={editor}
+              documentType={documentType}
+              onDocumentTypeChange={onDocumentTypeChange}
+              readOnly={readOnly}
+            />
+          )}
           
           {/* Editor content */}
           <div className={editorContentClasses}>

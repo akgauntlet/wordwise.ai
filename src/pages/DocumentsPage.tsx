@@ -12,11 +12,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DocumentCard } from "@/components/dashboard/DocumentCard";
-import { DocumentImport } from "@/components/document/DocumentImport";
+import { DocumentImport, DocumentCreationDialog } from "@/components/document";
 import { useDocuments } from "@/hooks/document/useDocuments";
 import { PageErrorBoundary } from "@/components/layout";
 import { setActiveDocument } from "@/lib/utils";
+import type { DocumentType } from "@/types/document";
 import { 
   Plus, 
   FileText, 
@@ -25,6 +33,19 @@ import {
   Search,
   Upload
 } from "lucide-react";
+
+/**
+ * Document type display names
+ */
+const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
+  'general': 'General Writing',
+  'essay': 'Essay',
+  'creative-writing': 'Creative Writing',
+  'script': 'Script',
+  'email': 'Email',
+  'academic': 'Academic Paper',
+  'business': 'Business Document',
+};
 
 /**
  * Documents page content component
@@ -37,17 +58,18 @@ function DocumentsPageContent() {
     error,
     saving,
     saveError,
-    createNewDocument,
     deleteDocumentById,
     canCreateDocument
   } = useDocuments();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<DocumentType | "all">("all");
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [showImport, setShowImport] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   /**
-   * Filter documents based on search query (title only)
+   * Filter documents based on search query and document type
    */
   const filteredDocuments = useMemo(() => {
     const sortDocuments = (docs: typeof documents) => {
@@ -58,25 +80,36 @@ function DocumentsPageContent() {
       });
     };
 
-    if (!searchQuery.trim()) {
-      return sortDocuments(documents);
+    let filtered = documents;
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(doc => doc.title.toLowerCase().includes(query));
     }
-    
-    const query = searchQuery.toLowerCase();
-    const filtered = documents.filter(doc => doc.title.toLowerCase().includes(query));
+
+    // Apply type filter
+    if (typeFilter !== "all") {
+      filtered = filtered.filter(doc => doc.type === typeFilter);
+    }
+
     return sortDocuments(filtered);
-  }, [documents, searchQuery]);
+  }, [documents, searchQuery, typeFilter]);
 
   /**
-   * Handle creating a new document
+   * Handle opening the create document dialog
    */
-  const handleCreateDocument = async () => {
-    const documentId = await createNewDocument();
-    if (documentId) {
-      // Set as active document in session storage
-      setActiveDocument(documentId);
-      navigate(`/editor/${documentId}`);
-    }
+  const handleCreateDocument = () => {
+    setShowCreateDialog(true);
+  };
+
+  /**
+   * Handle document creation from dialog
+   */
+  const handleDocumentCreated = (documentId: string) => {
+    // Set as active document in session storage
+    setActiveDocument(documentId);
+    navigate(`/editor/${documentId}`);
   };
 
   /**
@@ -176,16 +209,33 @@ function DocumentsPageContent() {
         </Alert>
       )}
 
-      {/* Search Bar */}
+      {/* Search Bar and Filters */}
       {documents.length > 0 && (
-        <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search documents by title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex gap-4 mb-8">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search documents by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="w-48">
+            <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as DocumentType | "all")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {Object.entries(DOCUMENT_TYPE_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       )}
 
@@ -201,6 +251,13 @@ function DocumentsPageContent() {
           className="mb-6"
         />
       )}
+
+      {/* Document creation dialog */}
+      <DocumentCreationDialog
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onDocumentCreated={handleDocumentCreated}
+      />
 
       {/* Documents grid */}
       <div className="pt-4">
@@ -230,14 +287,44 @@ function DocumentsPageContent() {
               No documents found
             </CardTitle>
             <CardDescription className="text-center mb-4">
-              No documents match your search for "{searchQuery}". Try a different search term.
+              {searchQuery.trim() && typeFilter !== "all"
+                ? `No documents match your search for "${searchQuery}" in ${DOCUMENT_TYPE_LABELS[typeFilter as DocumentType]} documents.`
+                : searchQuery.trim()
+                ? `No documents match your search for "${searchQuery}".`
+                : typeFilter !== "all"
+                ? `No ${DOCUMENT_TYPE_LABELS[typeFilter as DocumentType]} documents found.`
+                : "No documents match your filters."
+              }
             </CardDescription>
-            <Button 
-              variant="outline" 
-              onClick={() => setSearchQuery("")}
-            >
-              Clear Search
-            </Button>
+            <div className="flex gap-2">
+              {searchQuery.trim() && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSearchQuery("")}
+                >
+                  Clear Search
+                </Button>
+              )}
+              {typeFilter !== "all" && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setTypeFilter("all")}
+                >
+                  Clear Type Filter
+                </Button>
+              )}
+              {(searchQuery.trim() || typeFilter !== "all") && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchQuery("");
+                    setTypeFilter("all");
+                  }}
+                >
+                  Clear All Filters
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       ) : (

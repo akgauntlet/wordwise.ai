@@ -15,7 +15,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useDocument } from '@/hooks/document';
 import { PageErrorBoundary } from '@/components/layout';
 import { setActiveDocument } from '@/lib/utils';
-import type { TiptapContent } from '@/types/document';
+import type { TiptapContent, DocumentType } from '@/types/document';
 
 /**
  * Editor page component
@@ -29,6 +29,7 @@ function EditorPageContent() {
   
 
   const [currentTitle, setCurrentTitle] = useState('');
+  const [currentDocumentType, setCurrentDocumentType] = useState<DocumentType>('general');
 
   /**
    * Set active document in session storage when documentId is available
@@ -40,11 +41,12 @@ function EditorPageContent() {
   }, [documentId]);
 
   /**
-   * Update title when document loads
+   * Update title and document type when document loads
    */
   useEffect(() => {
     if (document) {
       setCurrentTitle(document.title);
+      setCurrentDocumentType(document.type);
     }
   }, [document]);
 
@@ -78,6 +80,22 @@ function EditorPageContent() {
     // Save the title change immediately
     if (document) {
       await saveDocument(document.content, newTitle);
+    }
+  };
+
+  /**
+   * Handle document type changes in the editor
+   */
+  const handleDocumentTypeChange = async (newType: DocumentType) => {
+    setCurrentDocumentType(newType);
+    // Save the document type change immediately using document service
+    if (document && documentId) {
+      try {
+        const { updateDocument } = await import('@/services/document/documentService');
+        await updateDocument(documentId, { type: newType });
+      } catch (error) {
+        console.error('Failed to update document type:', error);
+      }
     }
   };
 
@@ -142,10 +160,12 @@ function EditorPageContent() {
               documentId={documentId}
               initialContent={document.content}
               title={currentTitle}
+              documentType={currentDocumentType}
               targetWords={500}
               showSuggestionSidebar={true}
               onContentChange={handleContentChange}
               onTitleChange={handleTitleChange}
+              onDocumentTypeChange={handleDocumentTypeChange}
               onAutoSave={handleManualSave} // Manual save handled by useDocument hook
               saveStatus={saveStatus}
               className="w-full h-full"

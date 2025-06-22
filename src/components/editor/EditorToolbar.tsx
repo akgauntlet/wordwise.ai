@@ -27,7 +27,9 @@ import {
   Pilcrow
 } from 'lucide-react';
 import { useEditorCommands } from '@/hooks/editor';
+import { EditableDocumentType } from './EditableDocumentType';
 import type { Editor } from '@tiptap/react';
+import type { DocumentType } from '@/types/document';
 
 /**
  * Editor toolbar props
@@ -35,6 +37,12 @@ import type { Editor } from '@tiptap/react';
 interface EditorToolbarProps {
   /** Tiptap editor instance */
   editor: Editor | null;
+  /** Current document type */
+  documentType?: DocumentType;
+  /** Callback when document type changes */
+  onDocumentTypeChange?: (newType: DocumentType) => void;
+  /** Whether document type is read-only */
+  readOnly?: boolean;
   /** Additional CSS classes */
   className?: string;
 }
@@ -112,12 +120,21 @@ function ToolbarSeparator() {
 
 /**
  * Rich text editor toolbar component
- * Provides comprehensive formatting controls for the Tiptap editor
+ * Provides comprehensive formatting controls for the Tiptap editor and document type selection
  * 
  * @param editor Tiptap editor instance
+ * @param documentType Current document type
+ * @param onDocumentTypeChange Callback when document type changes
+ * @param readOnly Whether document type is read-only
  * @param className Additional CSS classes
  */
-export function EditorToolbar({ editor, className = '' }: EditorToolbarProps) {
+export function EditorToolbar({ 
+  editor, 
+  documentType = 'general',
+  onDocumentTypeChange,
+  readOnly = false,
+  className = '' 
+}: EditorToolbarProps) {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const commands = useEditorCommands(editor);
 
@@ -157,169 +174,186 @@ export function EditorToolbar({ editor, className = '' }: EditorToolbarProps) {
 
   return (
     <div className={`relative flex flex-wrap items-center gap-1 p-3 border-b bg-muted/30 ${className}`}>
-      {/* History Controls */}
-      <ToolbarSection>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={commands.undo}
-          disabled={!commands.canUndo}
-          title="Undo (Ctrl+Z)"
-        >
-          <Undo className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={commands.redo}
-          disabled={!commands.canRedo}
-          title="Redo (Ctrl+Y)"
-        >
-          <Redo className="h-4 w-4" />
-        </Button>
-      </ToolbarSection>
+      {/* Left side controls */}
+      <div className="flex items-center gap-1 flex-1">
+        {/* History Controls */}
+        <ToolbarSection>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={commands.undo}
+            disabled={!commands.canUndo}
+            title="Undo (Ctrl+Z)"
+          >
+            <Undo className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={commands.redo}
+            disabled={!commands.canRedo}
+            title="Redo (Ctrl+Y)"
+          >
+            <Redo className="h-4 w-4" />
+          </Button>
+        </ToolbarSection>
 
-      <ToolbarSeparator />
+        <ToolbarSeparator />
 
-      {/* Heading Selection */}
-      <ToolbarSection>
-        <Select
-          value={
-            commands.isActive('heading', { level: 1 }) ? 'h1' :
-            commands.isActive('heading', { level: 2 }) ? 'h2' :
-            commands.isActive('heading', { level: 3 }) ? 'h3' :
-            commands.isActive('heading', { level: 4 }) ? 'h4' :
-            commands.isActive('heading', { level: 5 }) ? 'h5' :
-            commands.isActive('heading', { level: 6 }) ? 'h6' :
-            'paragraph'
-          }
-          onValueChange={(value) => {
-            if (value === 'paragraph') {
-              editor.chain().focus().setParagraph().run();
-            } else {
-              const level = parseInt(value.replace('h', '')) as 1 | 2 | 3 | 4 | 5 | 6;
-              commands.toggleHeading(level);
+        {/* Heading Selection */}
+        <ToolbarSection>
+          <Select
+            value={
+              commands.isActive('heading', { level: 1 }) ? 'h1' :
+              commands.isActive('heading', { level: 2 }) ? 'h2' :
+              commands.isActive('heading', { level: 3 }) ? 'h3' :
+              commands.isActive('heading', { level: 4 }) ? 'h4' :
+              commands.isActive('heading', { level: 5 }) ? 'h5' :
+              commands.isActive('heading', { level: 6 }) ? 'h6' :
+              'paragraph'
             }
-          }}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="paragraph">
-              <div className="flex items-center gap-2">
-                <Pilcrow className="h-4 w-4" />
-                Paragraph
-              </div>
-            </SelectItem>
-            <SelectItem value="h1">
-              <div className="flex items-center gap-2">
-                <Type className="h-4 w-4" />
-                Heading 1
-              </div>
-            </SelectItem>
-            <SelectItem value="h2">Heading 2</SelectItem>
-            <SelectItem value="h3">Heading 3</SelectItem>
-            <SelectItem value="h4">Heading 4</SelectItem>
-            <SelectItem value="h5">Heading 5</SelectItem>
-            <SelectItem value="h6">Heading 6</SelectItem>
-          </SelectContent>
-        </Select>
-      </ToolbarSection>
+            onValueChange={(value) => {
+              if (value === 'paragraph') {
+                editor.chain().focus().setParagraph().run();
+              } else {
+                const level = parseInt(value.replace('h', '')) as 1 | 2 | 3 | 4 | 5 | 6;
+                commands.toggleHeading(level);
+              }
+            }}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="paragraph">
+                <div className="flex items-center gap-2">
+                  <Pilcrow className="h-4 w-4" />
+                  Paragraph
+                </div>
+              </SelectItem>
+              <SelectItem value="h1">
+                <div className="flex items-center gap-2">
+                  <Type className="h-4 w-4" />
+                  Heading 1
+                </div>
+              </SelectItem>
+              <SelectItem value="h2">Heading 2</SelectItem>
+              <SelectItem value="h3">Heading 3</SelectItem>
+              <SelectItem value="h4">Heading 4</SelectItem>
+              <SelectItem value="h5">Heading 5</SelectItem>
+              <SelectItem value="h6">Heading 6</SelectItem>
+            </SelectContent>
+          </Select>
+        </ToolbarSection>
 
-      <ToolbarSeparator />
+        <ToolbarSeparator />
 
-      {/* Text Formatting */}
-      <ToolbarSection>
-        <Button
-          variant={commands.isActive('bold') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={commands.toggleBold}
-          title="Bold (Ctrl+B)"
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={commands.isActive('italic') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={commands.toggleItalic}
-          title="Italic (Ctrl+I)"
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={commands.isActive('underline') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={commands.toggleUnderline}
-          title="Underline (Ctrl+U)"
-        >
-          <Underline className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={commands.isActive('strike') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={commands.toggleStrike}
-          title="Strikethrough"
-        >
-          <Strikethrough className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={commands.isActive('code') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={commands.toggleCode}
-          title="Inline Code"
-        >
-          <Code className="h-4 w-4" />
-        </Button>
-      </ToolbarSection>
+        {/* Text Formatting */}
+        <ToolbarSection>
+          <Button
+            variant={commands.isActive('bold') ? 'default' : 'ghost'}
+            size="sm"
+            onClick={commands.toggleBold}
+            title="Bold (Ctrl+B)"
+          >
+            <Bold className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={commands.isActive('italic') ? 'default' : 'ghost'}
+            size="sm"
+            onClick={commands.toggleItalic}
+            title="Italic (Ctrl+I)"
+          >
+            <Italic className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={commands.isActive('underline') ? 'default' : 'ghost'}
+            size="sm"
+            onClick={commands.toggleUnderline}
+            title="Underline (Ctrl+U)"
+          >
+            <Underline className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={commands.isActive('strike') ? 'default' : 'ghost'}
+            size="sm"
+            onClick={commands.toggleStrike}
+            title="Strikethrough"
+          >
+            <Strikethrough className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={commands.isActive('code') ? 'default' : 'ghost'}
+            size="sm"
+            onClick={commands.toggleCode}
+            title="Inline Code"
+          >
+            <Code className="h-4 w-4" />
+          </Button>
+        </ToolbarSection>
 
-      <ToolbarSeparator />
+        <ToolbarSeparator />
 
-      {/* Lists and Blocks */}
-      <ToolbarSection>
-        <Button
-          variant={commands.isActive('bulletList') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={commands.toggleBulletList}
-          title="Bullet List"
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={commands.isActive('orderedList') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={commands.toggleOrderedList}
-          title="Numbered List"
-        >
-          <ListOrdered className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={commands.isActive('blockquote') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={commands.toggleBlockquote}
-          title="Quote"
-        >
-          <Quote className="h-4 w-4" />
-        </Button>
-      </ToolbarSection>
+        {/* Lists and Blocks */}
+        <ToolbarSection>
+          <Button
+            variant={commands.isActive('bulletList') ? 'default' : 'ghost'}
+            size="sm"
+            onClick={commands.toggleBulletList}
+            title="Bullet List"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={commands.isActive('orderedList') ? 'default' : 'ghost'}
+            size="sm"
+            onClick={commands.toggleOrderedList}
+            title="Numbered List"
+          >
+            <ListOrdered className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={commands.isActive('blockquote') ? 'default' : 'ghost'}
+            size="sm"
+            onClick={commands.toggleBlockquote}
+            title="Quote"
+          >
+            <Quote className="h-4 w-4" />
+          </Button>
+        </ToolbarSection>
 
-      <ToolbarSeparator />
+        <ToolbarSeparator />
 
-      {/* Links */}
-      <ToolbarSection>
-        <Button
-          variant={commands.isActive('link') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={handleLinkClick}
-          title={commands.isActive('link') ? 'Remove Link' : 'Add Link'}
-        >
-          {commands.isActive('link') ? (
-            <Unlink className="h-4 w-4" />
-          ) : (
-            <Link className="h-4 w-4" />
-          )}
-        </Button>
-      </ToolbarSection>
+        {/* Links */}
+        <ToolbarSection>
+          <Button
+            variant={commands.isActive('link') ? 'default' : 'ghost'}
+            size="sm"
+            onClick={handleLinkClick}
+            title={commands.isActive('link') ? 'Remove Link' : 'Add Link'}
+          >
+            {commands.isActive('link') ? (
+              <Unlink className="h-4 w-4" />
+            ) : (
+              <Link className="h-4 w-4" />
+            )}
+          </Button>
+        </ToolbarSection>
+      </div>
+
+      {/* Right side controls */}
+      <div className="flex items-center gap-1">
+        <ToolbarSeparator />
+        
+        {/* Document Type */}
+        <ToolbarSection>
+          <EditableDocumentType
+            documentType={documentType}
+            onDocumentTypeChange={onDocumentTypeChange || (() => {})}
+            readOnly={readOnly}
+          />
+        </ToolbarSection>
+      </div>
 
       {/* Link Dialog */}
       <LinkDialog

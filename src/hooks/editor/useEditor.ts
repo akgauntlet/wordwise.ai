@@ -116,7 +116,7 @@ export function useEditor({
           prose-ul:text-foreground prose-ol:text-foreground
           prose-li:text-foreground prose-li:marker:text-muted-foreground
           prose-a:text-blue-600 prose-a:no-underline hover:prose-a:text-blue-800
-          min-h-[400px] py-4 px-6
+          min-h-[400px] py-6 px-10
         `.replace(/\s+/g, ' ').trim(),
       },
     },

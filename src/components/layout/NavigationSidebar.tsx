@@ -48,6 +48,38 @@ interface NavigationItem {
 }
 
 /**
+ * Text transition wrapper component for smooth slide animations
+ */
+interface TextTransitionProps {
+  children: React.ReactNode;
+  show: boolean;
+  className?: string;
+  delay?: number;
+}
+
+function TextTransition({ children, show, className = '', delay = 0 }: TextTransitionProps) {
+  return (
+    <div 
+      className={`
+        transition-all duration-300 ease-in-out overflow-hidden
+        ${show 
+          ? 'opacity-100 translate-x-0 max-w-full' 
+          : 'opacity-0 max-w-0'
+        }
+        ${className}
+      `}
+      style={{ 
+        transitionDelay: show ? `${delay}ms` : '0ms'
+      }}
+    >
+      <div className="whitespace-nowrap">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Persistent navigation sidebar component
  * 
  * Provides main navigation across all pages. In editor mode,
@@ -150,31 +182,28 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
       onMouseLeave={() => isCollapsed && setIsExpanded(false)}
     >
       {/* Header */}
-      <div className="p-4 border-b border-border h-20 flex items-center">
+      <div className="p-4 border-b border-border h-20 flex items-center overflow-hidden">
         <div className="flex items-center gap-3 w-full">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
             <span className="text-primary-foreground font-bold text-sm">W</span>
           </div>
-          {shouldShowContent && (
-            <div className="min-w-0 flex-1">
-              <h1 className="font-bold text-lg text-foreground leading-none">
-                WordWise.ai
-              </h1>
-              <p className="text-xs text-muted-foreground mt-1 truncate">
-                AI Writing Assistant
-              </p>
-            </div>
-          )}
+          <TextTransition show={shouldShowContent} className="min-w-0 flex-1">
+            <h1 className="font-bold text-lg text-foreground leading-none">
+              WordWise.ai
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1 truncate">
+              AI Writing Assistant
+            </p>
+          </TextTransition>
         </div>
       </div>
 
       {/* Navigation Items */}
-      <nav className="flex-1 p-2">
+      <nav className="flex-1 p-2 overflow-hidden">
         <div className="space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isEditor = item.label === 'Editor';
-            const shouldShowDocumentName = isEditor && activeDocument && shouldShowContent;
             
             return (
               <Button
@@ -184,7 +213,7 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
                 onClick={isEditor ? handleEditorNavigate : () => handleNavigate(item.path)}
                 disabled={item.disabled}
                 className={`
-                  w-full justify-start gap-3 px-3 h-14
+                  w-full !justify-start gap-3 px-3 h-14 overflow-hidden text-left
                   ${item.isActive ? 'bg-secondary text-secondary-foreground' : ''}
                   ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
@@ -197,16 +226,17 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
                 }
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
-                {shouldShowContent && (
-                  <div className="flex flex-col items-start min-w-0 flex-1">
-                    <span className="truncate">{item.label}</span>
-                    {shouldShowDocumentName && (
-                      <span className="text-xs text-blue-600 truncate w-full text-left">
-                        {activeDocument.title}
-                      </span>
-                    )}
-                  </div>
-                )}
+                <TextTransition 
+                  show={shouldShowContent} 
+                  className="flex flex-col items-start min-w-0 flex-1"
+                >
+                  <span className="truncate">{item.label}</span>
+                  {isEditor && activeDocument && (
+                    <span className="text-xs text-blue-600 truncate w-full text-left block">
+                      {activeDocument.title}
+                    </span>
+                  )}
+                </TextTransition>
               </Button>
             );
           })}
@@ -214,20 +244,18 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
       </nav>
 
       {/* User Section */}
-      <div className="p-2 border-t border-border">
+      <div className="p-2 border-t border-border overflow-hidden">
         {/* User Profile */}
-        <div className="flex items-center gap-3 px-3 py-2 rounded-md mb-2 h-12">
+        <div className="flex items-center justify-start gap-3 px-3 py-2 rounded-md mb-2 h-12 overflow-hidden">
           <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          {shouldShowContent && (
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-foreground truncate">
-                {profile?.displayName || user?.email?.split('@')[0] || 'User'}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {user?.email}
-              </p>
-            </div>
-          )}
+          <TextTransition show={shouldShowContent} className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground truncate">
+              {profile?.displayName || user?.email?.split('@')[0] || 'User'}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {user?.email}
+            </p>
+          </TextTransition>
         </div>
 
         {/* Sign Out Button */}
@@ -236,19 +264,17 @@ export function NavigationSidebar({ isCollapsed = false, className = '' }: Navig
           size="sm"
           onClick={handleSignOut}
           disabled={isSigningOut}
-          className="w-full justify-start gap-3 h-12 px-3 text-muted-foreground hover:text-foreground"
+          className="w-full !justify-start gap-3 h-12 px-3 text-muted-foreground hover:text-foreground overflow-hidden text-left"
           title={!shouldShowContent ? 'Sign Out' : undefined}
         >
           <LogOut className="h-4 w-4 flex-shrink-0" />
-          {shouldShowContent && (
+          <TextTransition show={shouldShowContent}>
             <span className="truncate">
               {isSigningOut ? 'Signing Out...' : 'Sign Out'}
             </span>
-          )}
+          </TextTransition>
         </Button>
       </div>
-
-
     </aside>
   );
 } 

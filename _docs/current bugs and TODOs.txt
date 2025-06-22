@@ -2,6 +2,3 @@ the ui does not immediately respond to closing the google signin popup (COOP-rel
 
 
 api response takes way too long (standard?)
-
-
-analysis kickoff condition is unclear and also not reliable

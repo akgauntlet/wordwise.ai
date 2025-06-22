@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DocumentCard } from "./DocumentCard";
+import { DocumentCreationDialog } from "@/components/document";
 import { useDocuments } from "@/hooks/document/useDocuments";
 import { 
   Plus, 
@@ -31,12 +32,12 @@ export function DocumentList() {
     error,
     saving,
     saveError,
-    createNewDocument,
     deleteDocumentById,
     canCreateDocument
   } = useDocuments();
 
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   /**
    * Get the 3 most recently updated documents
@@ -50,13 +51,17 @@ export function DocumentList() {
     .slice(0, 3);
 
   /**
-   * Handle creating a new document
+   * Handle opening the create document dialog
    */
-  const handleCreateDocument = async () => {
-    const documentId = await createNewDocument();
-    if (documentId) {
-      navigate(`/editor/${documentId}`);
-    }
+  const handleCreateDocument = () => {
+    setShowCreateDialog(true);
+  };
+
+  /**
+   * Handle document creation from dialog
+   */
+  const handleDocumentCreated = (documentId: string) => {
+    navigate(`/editor/${documentId}`);
   };
 
   /**
@@ -159,6 +164,13 @@ export function DocumentList() {
           ))}
         </div>
       )}
+
+      {/* Document creation dialog */}
+      <DocumentCreationDialog
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onDocumentCreated={handleDocumentCreated}
+      />
     </div>
   );
 } 

@@ -9,6 +9,7 @@ export { EnhancedDocumentEditor } from './EnhancedDocumentEditor';
 export { EditorToolbar } from './EditorToolbar';
 export { EditorStats } from './EditorStats';
 export { EditableTitle } from './EditableTitle';
+export { EditableDocumentType } from './EditableDocumentType';
 export { SuggestionExtension } from './SuggestionExtension';
 export { SuggestionPopover } from './SuggestionPopover';
 export { SuggestionSidebar } from './SuggestionSidebar';

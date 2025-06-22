@@ -7,11 +7,12 @@
  */
 
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { DocumentList } from "@/components/dashboard/DocumentList";
-import { useDocuments } from "@/hooks/document/useDocuments";
+import { DocumentCreationDialog } from "@/components/document";
 import { PageErrorBoundary } from "@/components/layout";
 import { setActiveDocument } from "@/lib/utils";
 import { importDocument } from "@/services/document/importService";
@@ -26,18 +27,23 @@ import { FileText, Plus, User, Upload } from "lucide-react";
 function DashboardPageContent() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const { createNewDocument } = useDocuments();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
 
 
   /**
-   * Create a new document
+   * Handle opening the create document dialog
    */
-  const handleCreateDocument = async () => {
-    const documentId = await createNewDocument();
-    if (documentId) {
-      navigate(`/editor/${documentId}`);
-    }
+  const handleCreateDocument = () => {
+    setShowCreateDialog(true);
+  };
+
+  /**
+   * Handle document creation from dialog
+   */
+  const handleDocumentCreated = (documentId: string) => {
+    setActiveDocument(documentId);
+    navigate(`/editor/${documentId}`);
   };
 
   /**
@@ -170,6 +176,13 @@ function DashboardPageContent() {
             </Card>
           </div>
         </main>
+
+        {/* Document creation dialog */}
+        <DocumentCreationDialog
+          isOpen={showCreateDialog}
+          onClose={() => setShowCreateDialog(false)}
+          onDocumentCreated={handleDocumentCreated}
+        />
       </div>
     </div>
   );
