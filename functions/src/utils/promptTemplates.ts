@@ -342,7 +342,7 @@ export function generateLightweightUserPrompt(content: string): string {
 // Keep minimal compatibility exports for existing code
 export const ESL_GRAMMAR_PATTERNS = {
   articles: { rules: [], commonErrors: [] },
-  prepositions: { timePrepositions: {}, placePrepositions: {} },
+  prepositions: { timePrepositions: {} as object, placePrepositions: {} as object },
   subjectVerbAgreement: { rules: [] }
 };
 

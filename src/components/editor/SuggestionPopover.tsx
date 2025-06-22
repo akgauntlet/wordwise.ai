@@ -197,6 +197,14 @@ export function SuggestionPopover({
         </CardHeader>
 
         <CardContent className="pt-0">
+          {/* Explanation */}
+          <div className="mb-4">
+            <p className="text-sm text-neutral-700">
+              <span className="font-semibold">Explanation: </span>
+              {suggestion.explanation}
+            </p>
+          </div>
+
           {/* Original and suggested text */}
           <div className="space-y-3">
             <div>
@@ -212,15 +220,6 @@ export function SuggestionPopover({
               </p>
             </div>
           </div>
-
-          {/* Explanation */}
-          <div className="mt-4">
-            <p className="text-sm text-neutral-700">
-              {suggestion.explanation}
-            </p>
-          </div>
-
-
 
           {/* Action buttons */}
           <div className="flex gap-2 mt-4">

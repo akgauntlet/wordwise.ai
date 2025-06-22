@@ -75,7 +75,7 @@ export function parseAndValidateResponse(response: string): ParsedResponse {
     
     return result;
     
-  } catch (error) {
+  } catch {
     // Simple fallback - try one recovery method
     console.warn('[Parser] Primary parse failed, attempting simple recovery');
     return attemptSimpleRecovery(response);
@@ -92,7 +92,7 @@ export function parseAndValidateResponse(response: string): ParsedResponse {
 function extractSuggestions(
   suggestions: unknown, 
   type: 'grammar' | 'style' | 'readability'
-): any[] {
+): (GrammarSuggestion | StyleSuggestion | ReadabilitySuggestion)[] {
   if (!Array.isArray(suggestions)) {
     return [];
   }
@@ -142,7 +142,7 @@ function extractSuggestions(
         } as ReadabilitySuggestion;
       }
     })
-    .filter(Boolean) as any[];
+    .filter(Boolean) as (GrammarSuggestion | StyleSuggestion | ReadabilitySuggestion)[];
 }
 
 /**
@@ -188,7 +188,7 @@ function attemptSimpleRecovery(response: string): ParsedResponse {
       readabilitySuggestions: readabilityMatch ? parseArray(readabilityMatch[1], 'readability') as ReadabilitySuggestion[] : [],
       readabilityMetrics: getDefaultReadabilityMetrics()
     };
-  } catch (error) {
+  } catch {
     console.error('[Parser] Recovery failed, returning empty response');
     return {
       grammarSuggestions: [],
@@ -206,11 +206,11 @@ function attemptSimpleRecovery(response: string): ParsedResponse {
  * @param type - Suggestion type
  * @returns Parsed suggestions
  */
-function parseArray(arrayStr: string, type: string): any[] {
+function parseArray(arrayStr: string, type: 'grammar' | 'style' | 'readability'): (GrammarSuggestion | StyleSuggestion | ReadabilitySuggestion)[] {
   try {
     const parsed = JSON.parse(arrayStr);
-    return Array.isArray(parsed) ? extractSuggestions(parsed, type as any) : [];
-  } catch (error) {
+    return Array.isArray(parsed) ? extractSuggestions(parsed, type) : [];
+  } catch {
     return [];
   }
 }
@@ -219,21 +219,21 @@ function parseArray(arrayStr: string, type: string): any[] {
  * Fast validation helpers - minimal checking for performance
  */
 function validateSeverity(severity: unknown): 'low' | 'medium' | 'high' {
-  return ['low', 'medium', 'high'].includes(severity as string) ? severity as any : 'medium';
+  return ['low', 'medium', 'high'].includes(severity as string) ? severity as 'low' | 'medium' | 'high' : 'medium';
 }
 
 function validateStyleCategory(category: unknown): 'clarity' | 'conciseness' | 'tone' | 'formality' | 'word-choice' {
   return ['clarity', 'conciseness', 'tone', 'formality', 'word-choice'].includes(category as string) 
-    ? category as any : 'clarity';
+    ? category as 'clarity' | 'conciseness' | 'tone' | 'formality' | 'word-choice' : 'clarity';
 }
 
 function validateImpact(impact: unknown): 'low' | 'medium' | 'high' {
-  return ['low', 'medium', 'high'].includes(impact as string) ? impact as any : 'medium';
+  return ['low', 'medium', 'high'].includes(impact as string) ? impact as 'low' | 'medium' | 'high' : 'medium';
 }
 
 function validateReadabilityMetric(metric: unknown): 'sentence-length' | 'word-complexity' | 'paragraph-structure' | 'transitions' {
   return ['sentence-length', 'word-complexity', 'paragraph-structure', 'transitions'].includes(metric as string)
-    ? metric as any : 'sentence-length';
+    ? metric as 'sentence-length' | 'word-complexity' | 'paragraph-structure' | 'transitions' : 'sentence-length';
 }
 
 function getDefaultReadabilityMetrics(): ReadabilityMetrics {
@@ -257,7 +257,7 @@ function getDefaultReadabilityMetrics(): ReadabilityMetrics {
 export function parseResponseWithRecovery(response: string): ParsedResponse {
   try {
     return parseAndValidateResponse(response);
-  } catch (error) {
+  } catch {
     console.warn('[Parser] Parse failed, using empty fallback');
     return {
       grammarSuggestions: [],

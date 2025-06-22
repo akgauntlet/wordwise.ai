@@ -29,13 +29,14 @@ dist-ssr
 .env.development
 .env.development.local
 .env.test.local
-.env.production.local
-
-# Don't commit production env file (contains secrets)
 .env.production
+.env.production.local
 
 # Firebase
 .firebase/
 .firebaserc
 firebase-debug.log
 firebase-debug.*.log
+
+# Firebase Functions compiled output
+functions/lib/

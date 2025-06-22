@@ -154,6 +154,12 @@ function SuggestionItem({
         </Badge>
       </div>
 
+      {/* Explanation */}
+      <p className="text-xs text-neutral-600 line-clamp-2">
+        <span className="font-semibold">Explanation: </span>
+        {suggestion.explanation}
+      </p>
+
       {/* Original and suggested text */}
       <div className="space-y-1 text-xs">
         <div>
@@ -169,11 +175,6 @@ function SuggestionItem({
           </span>
         </div>
       </div>
-
-      {/* Explanation */}
-      <p className="text-xs text-neutral-600 line-clamp-2">
-        {suggestion.explanation}
-      </p>
 
       {/* Action buttons */}
       <div className="flex gap-2">
